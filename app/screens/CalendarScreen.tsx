@@ -81,7 +81,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
         data={days}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
-        initialScrollIndex={INITIAL_DAYS}
+        initialScrollIndex={INITIAL_DAYS - 7}
         getItemLayout={(_, index) => ({
           length: 100,
           offset: 100 * index,

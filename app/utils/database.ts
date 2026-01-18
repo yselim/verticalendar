@@ -9,8 +9,7 @@ export const initDatabase = () => {
       note_date TEXT NOT NULL,
       note_time TEXT,
       description TEXT NOT NULL,
-      order_index INTEGER NOT NULL DEFAULT 0,
-      alarm_on BOOLEAN NOT NULL DEFAULT 0
+      order_index INTEGER NOT NULL DEFAULT 0
     );
   `)
 }
@@ -20,11 +19,10 @@ export const addItemToDB = (
   noteTime: string | null,
   description: string,
   orderIndex: number = 0,
-  alarmOn: boolean = false,
 ) => {
   const result = db.runSync(
-    "INSERT INTO items (note_date, note_time, description, order_index, alarm_on) VALUES (?, ?, ?, ?, ?)",
-    [noteDate, noteTime, description, orderIndex, alarmOn ? 1 : 0],
+    "INSERT INTO items (note_date, note_time, description, order_index) VALUES (?, ?, ?, ?)",
+    [noteDate, noteTime, description, orderIndex],
   )
   return result.lastInsertRowId
 }
@@ -45,7 +43,6 @@ export const updateItem = (
   description: string,
   noteTime?: string | null,
   orderIndex?: number,
-  alarmOn?: boolean,
 ) => {
   let query = "UPDATE items SET description = ?"
   const params: (string | number)[] = [description]
@@ -57,10 +54,6 @@ export const updateItem = (
   if (orderIndex !== undefined) {
     query += ", order_index = ?"
     params.push(orderIndex)
-  }
-  if (alarmOn !== undefined) {
-    query += ", alarm_on = ?"
-    params.push(alarmOn ? 1 : 0)
   }
 
   query += " WHERE id = ?"

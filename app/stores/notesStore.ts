@@ -6,7 +6,7 @@ import { INote, INotesCollection } from "types/types"
 interface NotesStore {
   notes: INotesCollection
   fetchNotes: (date: Date) => void
-  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex?: number, alarmOn?: boolean) => void
+  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex?: number) => void
   updateNote: (noteId: number, updatedNote: Partial<INote>) => void
   deleteNote: (noteId: number) => void
 }
@@ -25,7 +25,6 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       note_time: item.note_time || null,
       description: item.description,
       order_index: item.order_index,
-      alarm_on: Boolean(item.alarm_on),
     }))
 
     set((state) => ({
@@ -36,8 +35,8 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     }))
   },
 
-  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex: number = 0, alarmOn: boolean = false) => {
-    const noteId = addItemToDB(noteDate, noteTime, description, orderIndex, alarmOn)
+  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex: number = 0) => {
+    const noteId = addItemToDB(noteDate, noteTime, description, orderIndex)
 
     // Add to local state
     const dateKey = noteDate
@@ -47,7 +46,6 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       note_time: noteTime,
       description,
       order_index: orderIndex,
-      alarm_on: alarmOn,
     }
 
     set((state) => ({
@@ -59,10 +57,10 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   },
 
   updateNote: (noteId: number, updatedNote: Partial<INote>) => {
-    const { description, note_time, order_index, alarm_on } = updatedNote
+    const { description, note_time, order_index } = updatedNote
 
     if (description !== undefined) {
-      updateItem(noteId, description, note_time, order_index, alarm_on)
+      updateItem(noteId, description, note_time, order_index)
     }
 
     // Update local state

@@ -98,7 +98,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
       <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
       <View style={$noteContent}>
         <Text text={note.description} style={$descriptionText} numberOfLines={2} />
-        {note.alarm_on && (
+        {note.note_time && (
           <View style={$alarmBadge}>
             <Text text="🔔" style={$alarmIcon} />
           </View>

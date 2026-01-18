@@ -60,14 +60,16 @@ const $container: ViewStyle = {
 
 const $titleContainer: ViewStyle = {
   marginBottom: 8,
+  alignItems: "center",
 }
 
 const $dateText: TextStyle = {
-  marginBottom: 4,
+  fontSize: 22,
 }
 
 const $dayNameText: TextStyle = {
   color: "#666",
+  fontSize: 22,
 }
 
 const $notesContainer: ViewStyle = {

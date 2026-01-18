@@ -7,6 +7,7 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Button } from "@/components/Button"
+import { Icon } from "@/components/Icon"
 import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { DAY_NAMES_FULL, MONTH_NAMES_FULL } from "@/utils/constants"
@@ -34,8 +35,8 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
       const existingNote = dayNotes.find(note => note.id === noteId)
       if (existingNote) {
         setItemText(existingNote.description)
-        setAlarmOn(existingNote.alarm_on)
         if (existingNote.note_time) {
+          setAlarmOn(true)
           const [hours, minutes] = existingNote.note_time.split(':')
           const timeDate = new Date()
           timeDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
@@ -72,10 +73,9 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
         updateNote(noteId, { 
           description: itemText.trim(),
           note_time: noteTime,
-          alarm_on: alarmOn,
         })
       } else {
-        addNote(noteDate, noteTime, itemText.trim(), 0, alarmOn)
+        addNote(noteDate, noteTime, itemText.trim(), 0)
       }
       navigation.goBack()
     }
@@ -83,37 +83,54 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
-      <View style={$titleContainer}>
-        <Text text={`${dayNumber} ${monthName} ${year} ${dayName}`} style={$dateText} />
-        {/* <Text text={dayName} style={$dayNameText} /> */}
-      </View>
-      <TextField
-        value={itemText}
-        onChangeText={setItemText}
-        placeholder="Enter item description"
-        style={$textField}
-        autoFocus
-      />
-      <View style={$alarmContainer}>
-        <Text text="Alarm" style={$alarmLabel} />
-        <Switch
-          value={alarmOn}
-          onValueChange={setAlarmOn}
+      <View style={$content}>
+        <View style={$titleContainer}>
+          <Text text={`${dayNumber} ${monthName} ${year} ${dayName}`} style={$dateText} />
+          {/* <Text text={dayName} style={$dayNameText} /> */}
+        </View>
+        <TextField
+          value={itemText}
+          onChangeText={setItemText}
+          placeholder="Enter item description"
+          style={$textField}
+          autoFocus
         />
-      </View>
-      {alarmOn && (
-        <View style={$timePickerContainer}>
-          <Text text="Time:" style={$timeLabel} />
-          <DateTimePicker
-            value={selectedTime}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={handleTimeChange}
-            style={$timePicker}
+        <View style={$alarmContainer}>
+          <Text text="Alarm" style={$alarmLabel} />
+          <Switch
+            value={alarmOn}
+            onValueChange={setAlarmOn}
           />
         </View>
-      )}
-      <Button text="Save" onPress={handleSave} style={$button} />
+        {alarmOn && (
+          <View style={$timePickerContainer}>
+            <Text text="Time:" style={$timeLabel} />
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleTimeChange}
+              minuteInterval={5}
+              style={$timePicker}
+            />
+          </View>
+        )}
+      </View>
+      <View style={$buttonContainer}>
+        <Button 
+          text="Cancel" 
+          onPress={() => navigation.goBack()} 
+          style={$cancelButton} 
+          preset="default"
+          LeftAccessory={(props) => <Icon icon="x" size={18} style={{marginRight: 8}} />}
+        />
+        <Button 
+          text="Save" 
+          onPress={handleSave} 
+          style={$saveButton}
+          LeftAccessory={(props) => <Icon icon="check" size={18} style={{marginRight: 8}} />}
+        />
+      </View>
     </Screen>
   )
 }
@@ -121,7 +138,11 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
 const $container: ViewStyle = {
   flex: 1,
   padding: 16,
-  justifyContent: "flex-start",
+  justifyContent: "space-between",
+}
+
+const $content: ViewStyle = {
+  flex: 1,
 }
 
 const $titleContainer: ViewStyle = {
@@ -174,6 +195,15 @@ const $timePicker: ViewStyle = {
   flex: 1,
 }
 
-const $button: ViewStyle = {
-  marginTop: 16,
+const $buttonContainer: ViewStyle = {
+  flexDirection: "row",
+  gap: 32,
+}
+
+const $cancelButton: ViewStyle = {
+  flex: 1,
+}
+
+const $saveButton: ViewStyle = {
+  flex: 1,
 }

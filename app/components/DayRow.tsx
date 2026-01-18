@@ -50,7 +50,11 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday }) {
                 borderBottomColor: isToday ? "red" : "white",
                 backgroundColor: "#e7e5e5",
               }
-            : { borderBottomWidth: 1, borderBottomColor: "white", backgroundColor: "#d2cdcd" }),
+            : {
+                borderBottomWidth: isToday ? 2 : 1,
+                borderBottomColor: isToday ? "red" : "white",
+                backgroundColor: "#d2cdcd",
+              }),
           ...(isToday && {
             borderWidth: 2,
             borderColor: "red",
@@ -71,7 +75,11 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday }) {
         <View style={$column3}>
           {dayNotes.map((note) => (
             <View key={note.id} style={$noteRow}>
-              {/* <Text text="•" style={$noteDot} /> */}
+              {note.note_time && (
+                <View style={$timeBadge}>
+                  <Text text={note.note_time} style={$timeText} />
+                </View>
+              )}
               <Text
                 text={note.description}
                 style={$noteDescription}
@@ -106,7 +114,7 @@ const $column3: ViewStyle = {
   flex: 1,
   justifyContent: "center",
   flexDirection: "column",
-  gap: 4,
+  gap: 1,
   paddingLeft: 5,
 }
 
@@ -114,6 +122,19 @@ const $noteRow: ViewStyle = {
   flexDirection: "row",
   alignItems: "center",
   gap: 4,
+}
+
+const $timeBadge: ViewStyle = {
+  backgroundColor: "#ffd90086",
+  borderRadius: 4,
+  paddingHorizontal: 4,
+  paddingVertical: 0,
+}
+
+const $timeText: TextStyle = {
+  fontSize: 10,
+  fontWeight: "600",
+  color: "#333",
 }
 
 const $noteDot: TextStyle = {

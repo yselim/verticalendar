@@ -97,12 +97,12 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
     >
       <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
       <View style={$noteContent}>
-        <Text text={note.description} style={$descriptionText} numberOfLines={2} />
         {note.note_time && (
-          <View style={$alarmBadge}>
-            <Text text="🔔" style={$alarmIcon} />
+          <View style={$timeBadge}>
+            <Text text={note.note_time} style={$timeText} />
           </View>
         )}
+        <Text text={note.description} style={$descriptionText} numberOfLines={2} />
       </View>
     </TouchableOpacity>
     </Animated.View>
@@ -110,7 +110,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
 }
 
 const $noteContainer: ViewStyle = {
-  padding: 16,
+  padding: 4,
   marginBottom: 12,
   backgroundColor: colors.palette.neutral100,
   borderRadius: 12,
@@ -124,6 +124,7 @@ const $noteContainer: ViewStyle = {
   elevation: 3,
   borderWidth: 1,
   borderColor: colors.palette.neutral200,
+  minHeight: 48,
 }
 
 const $noteContent: ViewStyle = {
@@ -135,21 +136,22 @@ const $noteContent: ViewStyle = {
 
 const $descriptionText: TextStyle = {
   flex: 1,
-  fontSize: 16,
+  fontSize: 14,
   lineHeight: 22,
   color: colors.palette.neutral800,
 }
 
-const $alarmBadge: ViewStyle = {
-  backgroundColor: colors.palette.accent100,
-  borderRadius: 12,
-  paddingHorizontal: 8,
+const $timeBadge: ViewStyle = {
+  backgroundColor: "#f6d61e7e",
+  borderRadius: 6,
+  paddingHorizontal: 6,
   paddingVertical: 4,
-  marginLeft: 8,
 }
 
-const $alarmIcon: TextStyle = {
+const $timeText: TextStyle = {
   fontSize: 14,
+  fontWeight: "600",
+  color: colors.palette.neutral800,
 }
 
 const $deleteButton: ViewStyle = {

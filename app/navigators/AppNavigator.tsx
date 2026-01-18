@@ -11,6 +11,7 @@ import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { CalendarScreen } from "@/screens/CalendarScreen"
 import { DayScreen } from "@/screens/DayScreen"
+import { AddEditItemScreen } from "@/screens/AddEditItemScreen"
 import { useAppTheme } from "@/theme/context"
 
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
@@ -43,6 +44,7 @@ const AppStack = () => {
     >
       <Stack.Screen name="Calendar" component={CalendarScreen} />
       <Stack.Screen name="Day" component={DayScreen} />
+      <Stack.Screen name="AddEditItem" component={AddEditItemScreen} />
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>

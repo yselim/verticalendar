@@ -4,6 +4,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { Button } from "@/components/Button"
 
 interface DayScreenParams {
   date: string
@@ -11,7 +12,7 @@ interface DayScreenParams {
 
 type DayScreenProps = NativeStackScreenProps<{ Day: DayScreenParams }, "Day">
 
-export const DayScreen: FC<DayScreenProps> = function DayScreen({ route }) {
+export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigation }) {
   const { date } = route.params
 
   const formattedDate = new Date(date).toLocaleDateString("en-US", {
@@ -21,9 +22,14 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route }) {
     day: "numeric",
   })
 
+  const handleAddPress = () => {
+    navigation.navigate("AddEditItem", { date })
+  }
+
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <Text text={formattedDate} preset="heading" />
+      <Button text="Add" onPress={handleAddPress} style={$button} />
     </Screen>
   )
 }
@@ -31,4 +37,8 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route }) {
 const $container: ViewStyle = {
   flex: 1,
   padding: 16,
+}
+
+const $button: ViewStyle = {
+  marginTop: "auto",
 }

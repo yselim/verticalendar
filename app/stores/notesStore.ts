@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-import { getItemsByDate, updateItem, addItemToDB } from "@/utils/database"
+import { getItemsByDate, updateItem, addItemToDB, deleteNoteFromDB } from "@/utils/database"
 import { INote, INotesCollection } from "types/types"
 
 interface NotesStore {
@@ -8,6 +8,7 @@ interface NotesStore {
   fetchNotes: (date: Date) => void
   addNote: (noteDateTime: string, description: string, orderIndex?: number, alarmOn?: boolean) => void
   updateNote: (noteId: number, updatedNote: Partial<INote>) => void
+  deleteNote: (noteId: number) => void
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
@@ -77,6 +78,23 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
             ...updatedNote,
           }
         }
+      })
+
+      return { notes: updatedNotes }
+    })
+  },
+
+  deleteNote: (noteId: number) => {
+    // Delete from database
+    deleteNoteFromDB(noteId)
+
+    // Remove from local state
+    set((state) => {
+      const updatedNotes = { ...state.notes }
+
+      // Find and remove the note from the collection
+      Object.keys(updatedNotes).forEach((dateKey) => {
+        updatedNotes[dateKey] = updatedNotes[dateKey].filter((note) => note.id !== noteId)
       })
 
       return { notes: updatedNotes }

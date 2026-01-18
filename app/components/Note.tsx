@@ -1,5 +1,5 @@
-import { FC } from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable } from "react-native"
+import { FC, useRef } from "react"
+import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
@@ -17,6 +17,8 @@ type NavigationProp = NativeStackNavigationProp<AppStackParamList>
 
 export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   const navigation = useNavigation<NavigationProp>()
+  const translateX = useRef(new Animated.Value(0)).current
+  const opacity = useRef(new Animated.Value(1)).current
 
   const handlePress = () => {
     navigation.navigate("AddEditItem", {
@@ -26,11 +28,60 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   }
 
   const handleDelete = () => {
-    onDelete?.(note.id)
+    // Animate out before deleting
+    Animated.parallel([
+      Animated.timing(translateX, {
+        toValue: -500,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onDelete?.(note.id)
+    })
   }
 
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Only respond to horizontal swipes
+        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Only allow left swipe (negative dx)
+        if (gestureState.dx < 0) {
+          translateX.setValue(gestureState.dx)
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // If swiped more than 120px to the left, delete
+        if (gestureState.dx < -120) {
+          handleDelete()
+        } else {
+          // Otherwise, spring back to original position
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 100,
+            friction: 8,
+          }).start()
+        }
+      },
+    }),
+  ).current
+
   return (
-    <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
+    <Animated.View
+      style={[
+        { transform: [{ translateX }], opacity },
+      ]}
+      {...panResponder.panHandlers}
+    >
+      <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
       <View style={$noteContent}>
         <Text text={note.description} style={$descriptionText} numberOfLines={2} />
         {note.alarm_on && (
@@ -39,16 +90,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
           </View>
         )}
       </View>
-      {onDelete && (
-        <Pressable
-          style={$deleteButton}
-          onPress={handleDelete}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text text="✕" style={$deleteText} />
-        </Pressable>
-      )}
     </TouchableOpacity>
+    </Animated.View>
   )
 }
 

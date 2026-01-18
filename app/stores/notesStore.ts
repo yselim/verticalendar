@@ -1,6 +1,6 @@
 import { create } from "zustand"
 
-import { getItemsByDate, updateItem, addItemToDB, deleteNoteFromDB } from "@/utils/database"
+import { getItemsByDate, updateItem, addItemToDB, deleteNoteFromDB, updateNoteDate } from "@/utils/database"
 import { INote, INotesCollection } from "types/types"
 
 interface NotesStore {
@@ -9,6 +9,7 @@ interface NotesStore {
   addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex?: number) => void
   updateNote: (noteId: number, updatedNote: Partial<INote>) => void
   deleteNote: (noteId: number) => void
+  moveNoteToDate: (noteId: number, newDate: string) => void
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
@@ -94,6 +95,36 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       Object.keys(updatedNotes).forEach((dateKey) => {
         updatedNotes[dateKey] = updatedNotes[dateKey].filter((note) => note.id !== noteId)
       })
+
+      return { notes: updatedNotes }
+    })
+  },
+
+  moveNoteToDate: (noteId: number, newDate: string) => {
+    // Update in database
+    updateNoteDate(noteId, newDate)
+
+    // Update local state - remove from old date and add to new date
+    set((state) => {
+      const updatedNotes = { ...state.notes }
+      let movedNote: INote | null = null
+
+      // Find and remove the note from its current date
+      Object.keys(updatedNotes).forEach((dateKey) => {
+        const noteIndex = updatedNotes[dateKey].findIndex((note) => note.id === noteId)
+        if (noteIndex !== -1) {
+          movedNote = { ...updatedNotes[dateKey][noteIndex], note_date: newDate }
+          updatedNotes[dateKey] = updatedNotes[dateKey].filter((note) => note.id !== noteId)
+        }
+      })
+
+      // Add to new date if we found the note
+      if (movedNote) {
+        if (!updatedNotes[newDate]) {
+          updatedNotes[newDate] = []
+        }
+        updatedNotes[newDate] = [movedNote, ...updatedNotes[newDate]]
+      }
 
       return { notes: updatedNotes }
     })

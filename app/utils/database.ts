@@ -62,4 +62,8 @@ export const updateItem = (
   db.runSync(query, params)
 }
 
+export const updateNoteDate = (id: number, newDate: string) => {
+  db.runSync("UPDATE items SET note_date = ? WHERE id = ?", [newDate, id])
+}
+
 export default db

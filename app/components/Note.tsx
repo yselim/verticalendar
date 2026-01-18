@@ -1,10 +1,13 @@
-import { FC, useRef } from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder } from "react-native"
+import { FC, useRef, useState } from "react"
+import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder, Modal } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
+import DateTimePicker from "@react-native-community/datetimepicker"
 
 import { Text } from "@/components/Text"
+import { Icon } from "@/components/Icon"
 import { colors } from "@/theme/colors"
+import { useNotesStore } from "@/stores/notesStore"
 import { INote } from "types/types"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 
@@ -19,8 +22,38 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   const navigation = useNavigation<NavigationProp>()
   const translateX = useRef(new Animated.Value(0)).current
   const opacity = useRef(new Animated.Value(1)).current
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false)
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const { moveNoteToDate } = useNotesStore()
   const SWIPE_DELETE_THRESHOLD = -120
   const SWIPE_MAX = -180
+
+  const handleSendToNextDay = () => {
+    const currentDate = new Date(note.note_date)
+    currentDate.setDate(currentDate.getDate() + 1)
+    const nextDay = currentDate.toISOString().split('T')[0]
+    moveNoteToDate(note.id, nextDay)
+    setShowSettingsModal(false)
+  }
+
+  const handleOpenDatePicker = () => {
+    setShowSettingsModal(false)
+    setSelectedDate(new Date(note.note_date))
+    setShowDatePickerModal(true)
+  }
+
+  const handleDateChange = (_event: any, date?: Date) => {
+    if (date) {
+      setSelectedDate(date)
+    }
+  }
+
+  const handleSendToDate = () => {
+    const newDate = selectedDate.toISOString().split('T')[0]
+    moveNoteToDate(note.id, newDate)
+    setShowDatePickerModal(false)
+  }
 
   const handlePress = () => {
     navigation.navigate("AddEditItem", {
@@ -103,8 +136,56 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
           </View>
         )}
         <Text text={note.description} style={$descriptionText} numberOfLines={2} />
+        <TouchableOpacity 
+          style={$settingsButton} 
+          onPress={() => setShowSettingsModal(true)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Icon icon="settings" size={18} color={colors.palette.neutral500} />
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
+
+      <Modal
+        visible={showSettingsModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <Pressable style={$modalOverlay} onPress={() => setShowSettingsModal(false)}>
+          <View style={$modalContent}>
+            <TouchableOpacity style={$modalButton} onPress={handleOpenDatePicker} activeOpacity={0.8}>
+              <Text text="Bir tarihe gönder" style={$modalButtonText} />
+            </TouchableOpacity>
+            <TouchableOpacity style={$modalButton} onPress={handleSendToNextDay} activeOpacity={0.8}>
+              <Text text="Ertesi güne gönder" style={$modalButtonText} />
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showDatePickerModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDatePickerModal(false)}
+      >
+        <View style={$modalOverlay}>
+          <View style={$datePickerModalContent}>
+            <Text text="Tarihe Gönder" style={$datePickerTitle} />
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              display="spinner"
+              onChange={handleDateChange}
+              style={$datePicker}
+            />
+            <TouchableOpacity style={$sendButton} onPress={handleSendToDate} activeOpacity={0.8}>
+              <Text text="GÖNDER" style={$sendButtonText} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </Animated.View>
   )
 }
@@ -152,6 +233,74 @@ const $timeText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
   color: colors.palette.neutral800,
+}
+
+const $settingsButton: ViewStyle = {
+  padding: 4,
+  marginLeft: 4,
+}
+
+const $modalOverlay: ViewStyle = {
+  flex: 1,
+  backgroundColor: "rgba(0, 0, 0, 0.5)",
+  justifyContent: "center",
+  alignItems: "center",
+}
+
+const $modalContent: ViewStyle = {
+  backgroundColor: "#fff",
+  borderRadius: 12,
+  padding: 16,
+  width: "80%",
+  gap: 8,
+}
+
+const $modalButton: ViewStyle = {
+  backgroundColor: "#555",
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  borderRadius: 8,
+  alignItems: "center",
+}
+
+const $modalButtonText: TextStyle = {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "600",
+}
+
+const $datePickerModalContent: ViewStyle = {
+  backgroundColor: "#fff",
+  borderRadius: 16,
+  padding: 20,
+  width: "85%",
+  alignItems: "center",
+}
+
+const $datePickerTitle: TextStyle = {
+  fontSize: 18,
+  fontWeight: "600",
+  marginBottom: 16,
+  color: "#333",
+}
+
+const $datePicker: ViewStyle = {
+  width: "100%",
+  height: 200,
+}
+
+const $sendButton: ViewStyle = {
+  backgroundColor: "#333",
+  paddingHorizontal: 40,
+  paddingVertical: 14,
+  borderRadius: 8,
+  marginTop: 16,
+}
+
+const $sendButtonText: TextStyle = {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "700",
 }
 
 const $deleteButton: ViewStyle = {

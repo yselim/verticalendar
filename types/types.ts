@@ -1,6 +1,7 @@
 export interface INote {
   id: number
-  note_date_time: string
+  note_date: string
+  note_time: string | null
   description: string
   order_index: number
   alarm_on: boolean

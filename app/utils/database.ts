@@ -6,7 +6,8 @@ export const initDatabase = () => {
   db.execSync(`
     CREATE TABLE IF NOT EXISTS items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      note_date_time DATETIME NOT NULL,
+      note_date TEXT NOT NULL,
+      note_time TEXT,
       description TEXT NOT NULL,
       order_index INTEGER NOT NULL DEFAULT 0,
       alarm_on BOOLEAN NOT NULL DEFAULT 0
@@ -15,22 +16,23 @@ export const initDatabase = () => {
 }
 
 export const addItemToDB = (
-  noteDateTime: string,
+  noteDate: string,
+  noteTime: string | null,
   description: string,
   orderIndex: number = 0,
   alarmOn: boolean = false,
 ) => {
   const result = db.runSync(
-    "INSERT INTO items (note_date_time, description, order_index, alarm_on) VALUES (?, ?, ?, ?)",
-    [noteDateTime, description, orderIndex, alarmOn ? 1 : 0],
+    "INSERT INTO items (note_date, note_time, description, order_index, alarm_on) VALUES (?, ?, ?, ?, ?)",
+    [noteDate, noteTime, description, orderIndex, alarmOn ? 1 : 0],
   )
   return result.lastInsertRowId
 }
 
-export const getItemsByDate = (noteDateTime: string) => {
+export const getItemsByDate = (noteDate: string) => {
   return db.getAllSync(
-    "SELECT * FROM items WHERE note_date_time = ? ORDER BY order_index ASC, id DESC",
-    [noteDateTime],
+    "SELECT * FROM items WHERE note_date = ? ORDER BY order_index ASC, id DESC",
+    [noteDate],
   )
 }
 
@@ -41,31 +43,30 @@ export const deleteNoteFromDB = (id: number) => {
 export const updateItem = (
   id: number,
   description: string,
+  noteTime?: string | null,
   orderIndex?: number,
   alarmOn?: boolean,
 ) => {
-  if (orderIndex !== undefined && alarmOn !== undefined) {
-    db.runSync("UPDATE items SET description = ?, order_index = ?, alarm_on = ? WHERE id = ?", [
-      description,
-      orderIndex,
-      alarmOn ? 1 : 0,
-      id,
-    ])
-  } else if (orderIndex !== undefined) {
-    db.runSync("UPDATE items SET description = ?, order_index = ? WHERE id = ?", [
-      description,
-      orderIndex,
-      id,
-    ])
-  } else if (alarmOn !== undefined) {
-    db.runSync("UPDATE items SET description = ?, alarm_on = ? WHERE id = ?", [
-      description,
-      alarmOn ? 1 : 0,
-      id,
-    ])
-  } else {
-    db.runSync("UPDATE items SET description = ? WHERE id = ?", [description, id])
+  let query = "UPDATE items SET description = ?"
+  const params: (string | number)[] = [description]
+
+  if (noteTime !== undefined) {
+    query += ", note_time = ?"
+    params.push(noteTime ?? "")
   }
+  if (orderIndex !== undefined) {
+    query += ", order_index = ?"
+    params.push(orderIndex)
+  }
+  if (alarmOn !== undefined) {
+    query += ", alarm_on = ?"
+    params.push(alarmOn ? 1 : 0)
+  }
+
+  query += " WHERE id = ?"
+  params.push(id)
+
+  db.runSync(query, params)
 }
 
 export default db

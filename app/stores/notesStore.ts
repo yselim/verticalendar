@@ -6,7 +6,7 @@ import { INote, INotesCollection } from "types/types"
 interface NotesStore {
   notes: INotesCollection
   fetchNotes: (date: Date) => void
-  addNote: (noteDateTime: string, description: string, orderIndex?: number, alarmOn?: boolean) => void
+  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex?: number, alarmOn?: boolean) => void
   updateNote: (noteId: number, updatedNote: Partial<INote>) => void
   deleteNote: (noteId: number) => void
 }
@@ -16,14 +16,13 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
 
   fetchNotes: (date: Date) => {
     const dateKey = date.toISOString().split("T")[0]
-    const dateTime = new Date(date)
-    dateTime.setHours(0, 0, 0, 0)
-    const noteDateTime = dateTime.toISOString()
+    const noteDate = dateKey
 
-    const items = getItemsByDate(noteDateTime)
+    const items = getItemsByDate(noteDate)
     const notes: INote[] = (items as any[]).map((item) => ({
       id: item.id,
-      note_date_time: item.note_date_time,
+      note_date: item.note_date,
+      note_time: item.note_time || null,
       description: item.description,
       order_index: item.order_index,
       alarm_on: Boolean(item.alarm_on),
@@ -37,14 +36,15 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     }))
   },
 
-  addNote: (noteDateTime: string, description: string, orderIndex: number = 0, alarmOn: boolean = false) => {
-    const noteId = addItemToDB(noteDateTime, description, orderIndex, alarmOn)
+  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex: number = 0, alarmOn: boolean = false) => {
+    const noteId = addItemToDB(noteDate, noteTime, description, orderIndex, alarmOn)
 
     // Add to local state
-    const dateKey = new Date(noteDateTime).toISOString().split("T")[0]
+    const dateKey = noteDate
     const newNote: INote = {
       id: noteId as number,
-      note_date_time: noteDateTime,
+      note_date: noteDate,
+      note_time: noteTime,
       description,
       order_index: orderIndex,
       alarm_on: alarmOn,
@@ -59,10 +59,10 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   },
 
   updateNote: (noteId: number, updatedNote: Partial<INote>) => {
-    const { description, order_index, alarm_on } = updatedNote
+    const { description, note_time, order_index, alarm_on } = updatedNote
 
     if (description !== undefined) {
-      updateItem(noteId, description, order_index, alarm_on)
+      updateItem(noteId, description, note_time, order_index, alarm_on)
     }
 
     // Update local state

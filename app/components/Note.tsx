@@ -24,7 +24,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
 
   const handlePress = () => {
     navigation.navigate("AddEditItem", {
-      date: note.note_date_time,
+      date: note.note_date,
       noteId: note.id,
     })
   }

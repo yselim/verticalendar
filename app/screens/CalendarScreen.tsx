@@ -2,6 +2,7 @@ import { FC } from "react"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { DayRow } from "@/components/DayRow"
 
 export const CalendarScreen: FC = function CalendarScreen() {
   return (
@@ -9,7 +10,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
       preset="fixed"
       contentContainerStyle={{ flex: 1, alignItems: "center", justifyContent: "center" }}
     >
-      <Text text="Hello world" />
+      <DayRow day={new Date("2026-01-17")} />
     </Screen>
   )
 }

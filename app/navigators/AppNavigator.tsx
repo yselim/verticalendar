@@ -9,6 +9,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
+import { CalendarScreen } from "@/screens/CalendarScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { useAppTheme } from "@/theme/context"
 
@@ -31,6 +32,7 @@ const AppStack = () => {
 
   return (
     <Stack.Navigator
+      initialRouteName="Calendar"
       screenOptions={{
         headerShown: false,
         navigationBarColor: colors.background,
@@ -39,7 +41,7 @@ const AppStack = () => {
         },
       }}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Calendar" component={CalendarScreen} />
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>

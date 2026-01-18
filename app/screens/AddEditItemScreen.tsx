@@ -6,17 +6,25 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { Button } from "@/components/Button"
+import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 
 type AddEditItemScreenProps = NativeStackScreenProps<AppStackParamList, "AddEditItem">
 
-export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditItemScreen({ route }) {
+export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditItemScreen({ route, navigation }) {
   const { date } = route.params
   const [itemText, setItemText] = useState("")
+  const { addNote } = useNotesStore()
 
   const handleSave = () => {
-    // TODO: Implement save logic
-    console.log("Saving:", itemText)
+    if (itemText.trim()) {
+      const dateTime = new Date(date)
+      dateTime.setHours(0, 0, 0, 0)
+      const noteDateTime = dateTime.toISOString()
+      
+      addNote(noteDateTime, itemText.trim(), 0, false)
+      navigation.goBack()
+    }
   }
 
   return (

@@ -6,12 +6,14 @@
  */
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import { useEffect } from "react"
 
 import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { CalendarScreen } from "@/screens/CalendarScreen"
 import { DayScreen } from "@/screens/DayScreen"
 import { AddEditItemScreen } from "@/screens/AddEditItemScreen"
+import { initDatabase } from "@/utils/database"
 import { useAppTheme } from "@/theme/context"
 
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
@@ -55,6 +57,10 @@ export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
+
+  useEffect(() => {
+    initDatabase()
+  }, [])
 
   return (
     <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>

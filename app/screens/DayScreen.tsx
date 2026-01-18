@@ -5,12 +5,9 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { Button } from "@/components/Button"
+import type { AppStackParamList } from "@/navigators/navigationTypes"
 
-interface DayScreenParams {
-  date: string
-}
-
-type DayScreenProps = NativeStackScreenProps<{ Day: DayScreenParams }, "Day">
+type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">
 
 export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigation }) {
   const { date } = route.params

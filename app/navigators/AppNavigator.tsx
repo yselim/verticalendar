@@ -10,7 +10,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { CalendarScreen } from "@/screens/CalendarScreen"
-import { WelcomeScreen } from "@/screens/WelcomeScreen"
+import { DayScreen } from "@/screens/DayScreen"
 import { useAppTheme } from "@/theme/context"
 
 import type { AppStackParamList, NavigationProps } from "./navigationTypes"
@@ -42,6 +42,7 @@ const AppStack = () => {
       }}
     >
       <Stack.Screen name="Calendar" component={CalendarScreen} />
+      <Stack.Screen name="Day" component={DayScreen} />
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>

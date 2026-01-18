@@ -14,9 +14,10 @@ import { MONTH_NAMES, DAY_NAMES } from "@/utils/constants"
 interface DayRowProps {
   day: Date
   isToday?: boolean
+  isHighlighted?: boolean
 }
 
-export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday }) {
+export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday, isHighlighted }) {
   const { themed } = useAppTheme()
   const isWeekendDay = isWeekend(day)
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
@@ -44,21 +45,24 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday }) {
           width: "100%",
           minHeight: 50,
           flexDirection: "row",
+          borderBottomWidth: isToday || isHighlighted ? 2 : 1,
+          borderBottomColor: isToday ? "red" : isHighlighted ? "blue" : "white",
           ...(isWeekendDay
             ? {
-                borderBottomWidth: isToday ? 2 : 1,
-                borderBottomColor: isToday ? "red" : "white",
                 backgroundColor: "#e7e5e5",
               }
             : {
-                borderBottomWidth: isToday ? 2 : 1,
-                borderBottomColor: isToday ? "red" : "white",
                 backgroundColor: "#d2cdcd",
               }),
           ...(isToday && {
             borderWidth: 2,
             borderColor: "red",
           }),
+          ...(!isToday &&
+            isHighlighted && {
+              borderWidth: 2,
+              borderColor: "blue",
+            }),
         }}
       >
         <View style={$column1}>

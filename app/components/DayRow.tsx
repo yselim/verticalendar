@@ -48,7 +48,7 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday }) {
             ? {
                 borderBottomWidth: isToday ? 2 : 1,
                 borderBottomColor: isToday ? "red" : "white",
-                backgroundColor: "#e6e6e6",
+                backgroundColor: "#e7e5e5",
               }
             : { borderBottomWidth: 1, borderBottomColor: "white", backgroundColor: "#d2cdcd" }),
           ...(isToday && {

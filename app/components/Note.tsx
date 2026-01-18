@@ -19,6 +19,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   const navigation = useNavigation<NavigationProp>()
   const translateX = useRef(new Animated.Value(0)).current
   const opacity = useRef(new Animated.Value(1)).current
+  const SWIPE_DELETE_THRESHOLD = -120
+  const SWIPE_MAX = -180
 
   const handlePress = () => {
     navigation.navigate("AddEditItem", {
@@ -45,31 +47,43 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
     })
   }
 
+  const resetPosition = () => {
+    Animated.spring(translateX, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 8,
+    }).start()
+  }
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
         // Only respond to horizontal swipes
         return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
       },
+      onPanResponderGrant: () => {
+        translateX.stopAnimation()
+      },
       onPanResponderMove: (_, gestureState) => {
         // Only allow left swipe (negative dx)
         if (gestureState.dx < 0) {
-          translateX.setValue(gestureState.dx)
+          translateX.setValue(Math.max(gestureState.dx, SWIPE_MAX))
+        } else {
+          translateX.setValue(0)
         }
       },
       onPanResponderRelease: (_, gestureState) => {
         // If swiped more than 120px to the left, delete
-        if (gestureState.dx < -120) {
+        if (gestureState.dx < SWIPE_DELETE_THRESHOLD) {
           handleDelete()
         } else {
           // Otherwise, spring back to original position
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: true,
-            tension: 100,
-            friction: 8,
-          }).start()
+          resetPosition()
         }
+      },
+      onPanResponderTerminate: () => {
+        resetPosition()
       },
     }),
   ).current

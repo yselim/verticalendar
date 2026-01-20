@@ -69,6 +69,21 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   }
 
   const handleAlarmIconPress = () => {
+    // Reset to default time for new alarm
+    const defaultTime = new Date()
+    defaultTime.setHours(10, 0, 0, 0)
+    setSelectedTime(defaultTime)
+    setShowTimePicker(true)
+  }
+
+  const handleAlarmTimePress = () => {
+    // Pre-select current alarm time
+    if (note.note_time) {
+      const [hours, minutes] = note.note_time.split(':')
+      const timeDate = new Date()
+      timeDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+      setSelectedTime(timeDate)
+    }
     setShowTimePicker(true)
   }
 
@@ -81,11 +96,10 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
       const minutes = time.getMinutes().toString().padStart(2, '0')
       const timeString = `${hours}:${minutes}`
       updateNote(note.id, { note_time: timeString })
+    } else if (event.type === 'dismissed' && note.note_time) {
+      // Only remove alarm if user cancels while editing existing alarm
+      updateNote(note.id, { note_time: null })
     }
-  }
-
-  const handleRemoveAlarm = () => {
-    updateNote(note.id, { note_time: null })
   }
 
   const handlePress = () => {
@@ -166,7 +180,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
         {note.note_time ? (
           <TouchableOpacity 
             style={$timeBadge} 
-            onPress={handleRemoveAlarm}
+            onPress={handleAlarmTimePress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Text text={note.note_time} style={$timeText} />

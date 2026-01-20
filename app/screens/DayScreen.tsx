@@ -16,14 +16,15 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
   const { date } = route.params
   const { notes, fetchNotes, deleteNote } = useNotesStore()
 
-  const dateKey = new Date(date).toISOString().split('T')[0]
+  const currentDate = new Date(date)
+  // Use local date to avoid timezone issues
+  const dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
   const dayNotes = notes[dateKey] || []
 
   useEffect(() => {
     fetchNotes(new Date(date))
   }, [date])
 
-  const currentDate = new Date(date)
   const dayNumber = currentDate.getDate()
   const monthName = MONTH_NAMES_FULL[currentDate.getMonth()]
   const year = currentDate.getFullYear()

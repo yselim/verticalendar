@@ -24,35 +24,42 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   const opacity = useRef(new Animated.Value(1)).current
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showDatePickerModal, setShowDatePickerModal] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(new Date())
   const { moveNoteToDate } = useNotesStore()
   const SWIPE_DELETE_THRESHOLD = -120
   const SWIPE_MAX = -180
 
   const handleSendToNextDay = () => {
-    const currentDate = new Date(note.note_date)
+    // Parse the note_date and add one day using local date
+    const [year, month, day] = note.note_date.split('-').map(Number)
+    const currentDate = new Date(year, month - 1, day)
     currentDate.setDate(currentDate.getDate() + 1)
-    const nextDay = currentDate.toISOString().split('T')[0]
-    moveNoteToDate(note.id, nextDay)
+    
+    const nextYear = currentDate.getFullYear()
+    const nextMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
+    const nextDay = String(currentDate.getDate()).padStart(2, '0')
+    const nextDayStr = `${nextYear}-${nextMonth}-${nextDay}`
+    
+    moveNoteToDate(note.id, nextDayStr)
     setShowSettingsModal(false)
   }
 
   const handleOpenDatePicker = () => {
     setShowSettingsModal(false)
-    setSelectedDate(new Date(note.note_date))
     setShowDatePickerModal(true)
   }
 
-  const handleDateChange = (_event: any, date?: Date) => {
-    if (date) {
-      setSelectedDate(date)
-    }
-  }
-
-  const handleSendToDate = () => {
-    const newDate = selectedDate.toISOString().split('T')[0]
-    moveNoteToDate(note.id, newDate)
+  const handleDateChange = (event: any, date?: Date) => {
     setShowDatePickerModal(false)
+    if (event.type === 'set' && date) {
+      // Use local date to avoid timezone issues
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const newDate = `${year}-${month}-${day}`
+
+      console.log('newDate: ', newDate)
+      moveNoteToDate(note.id, newDate)
+    }
   }
 
   const handlePress = () => {
@@ -164,28 +171,14 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
         </Pressable>
       </Modal>
 
-      <Modal
-        visible={showDatePickerModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowDatePickerModal(false)}
-      >
-        <View style={$modalOverlay}>
-          <View style={$datePickerModalContent}>
-            <Text text="Tarihe Gönder" style={$datePickerTitle} />
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-              style={$datePicker}
-            />
-            <TouchableOpacity style={$sendButton} onPress={handleSendToDate} activeOpacity={0.8}>
-              <Text text="GÖNDER" style={$sendButtonText} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {showDatePickerModal && (
+        <DateTimePicker
+          value={new Date(note.note_date + 'T12:00:00')}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
     </Animated.View>
   )
 }
@@ -267,40 +260,6 @@ const $modalButtonText: TextStyle = {
   color: "#fff",
   fontSize: 16,
   fontWeight: "600",
-}
-
-const $datePickerModalContent: ViewStyle = {
-  backgroundColor: "#fff",
-  borderRadius: 16,
-  padding: 20,
-  width: "85%",
-  alignItems: "center",
-}
-
-const $datePickerTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  marginBottom: 16,
-  color: "#333",
-}
-
-const $datePicker: ViewStyle = {
-  width: "100%",
-  height: 200,
-}
-
-const $sendButton: ViewStyle = {
-  backgroundColor: "#333",
-  paddingHorizontal: 40,
-  paddingVertical: 14,
-  borderRadius: 8,
-  marginTop: 16,
-}
-
-const $sendButtonText: TextStyle = {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "700",
 }
 
 const $deleteButton: ViewStyle = {

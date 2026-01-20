@@ -30,7 +30,8 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
   // Find existing note if editing
   useEffect(() => {
     if (isEditing) {
-      const dateKey = new Date(date).toISOString().split('T')[0]
+      const d = new Date(date)
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const dayNotes = notes[dateKey] || []
       const existingNote = dayNotes.find(note => note.id === noteId)
       if (existingNote) {
@@ -66,7 +67,8 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
 
   const handleSave = () => {
     if (itemText.trim()) {
-      const noteDate = new Date(date).toISOString().split('T')[0]
+      const d = new Date(date)
+      const noteDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const noteTime = alarmOn ? formatTimeString(selectedTime) : null
 
       if (isEditing) {

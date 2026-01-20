@@ -1,5 +1,5 @@
 import { FC, useCallback, useRef, useState } from "react"
-import { View, ViewStyle, TouchableOpacity, TextStyle, Platform, Modal } from "react-native"
+import { View, ViewStyle, TouchableOpacity, TextStyle } from "react-native"
 import { FlashList, FlashListRef } from "@shopify/flash-list"
 import DateTimePicker from "@react-native-community/datetimepicker"
 
@@ -36,7 +36,6 @@ export const CalendarScreen: FC = function CalendarScreen() {
   const flashListRef = useRef<FlashListRef<DayItem>>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(today)
   const [listKey, setListKey] = useState(0)
   const [highlightedDate, setHighlightedDate] = useState<Date | null>(null)
 
@@ -75,16 +74,13 @@ export const CalendarScreen: FC = function CalendarScreen() {
     scrollToDate(today)
   }
 
-  const handleDateChange = (_event: any, date?: Date) => {
-    if (date) {
-      date.setHours(0, 0, 0, 0)
-      setSelectedDate(date)
-    }
-  }
-
-  const handleGoButton = () => {
+  const handleDateChange = (event: any, date?: Date) => {
+    // Close the picker on any interaction (OK, Cancel, or selection on iOS)
     setShowDatePicker(false)
-    scrollToDate(selectedDate)
+    if (event.type === 'set' && date) {
+      date.setHours(0, 0, 0, 0)
+      scrollToDate(date)
+    }
   }
 
   const isLoadingRef = useRef(false)
@@ -167,28 +163,14 @@ export const CalendarScreen: FC = function CalendarScreen() {
         onStartReachedThreshold={0.5}
       />
       
-      <Modal
-        visible={showDatePicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <View style={$modalOverlay}>
-          <View style={$modalContent}>
-            <Text text="Bir Tarihe Git" style={$modalTitle} />
-            <DateTimePicker
-              value={selectedDate}
-              mode="date"
-              display="spinner"
-              onChange={handleDateChange}
-              style={$datePicker}
-            />
-            <TouchableOpacity style={$goButton} onPress={handleGoButton} activeOpacity={0.8}>
-              <Text text="GİT" style={$goButtonText} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      {showDatePicker && (
+        <DateTimePicker
+          value={today}
+          mode="date"
+          display="calendar"
+          onChange={handleDateChange}
+        />
+      )}
 
       {menuOpen && (
         <View style={$menuContainer}>
@@ -252,45 +234,4 @@ const $menuButtonText: TextStyle = {
   color: "#fff",
   fontSize: 14,
   fontWeight: "600",
-}
-
-const $modalOverlay: ViewStyle = {
-  flex: 1,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $modalContent: ViewStyle = {
-  backgroundColor: "#fff",
-  borderRadius: 16,
-  padding: 20,
-  width: "85%",
-  alignItems: "center",
-}
-
-const $modalTitle: TextStyle = {
-  fontSize: 18,
-  fontWeight: "600",
-  marginBottom: 16,
-  color: "#333",
-}
-
-const $datePicker: ViewStyle = {
-  width: "100%",
-  height: 200,
-}
-
-const $goButton: ViewStyle = {
-  backgroundColor: "#333",
-  paddingHorizontal: 40,
-  paddingVertical: 14,
-  borderRadius: 8,
-  marginTop: 16,
-}
-
-const $goButtonText: TextStyle = {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "700",
 }

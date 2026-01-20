@@ -23,7 +23,11 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday, isHighlig
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
   const { notes, fetchNotes } = useNotesStore()
 
-  const dateKey = day.toISOString().split("T")[0]
+  // Use local date to avoid timezone issues
+  const year = day.getFullYear()
+  const month = String(day.getMonth() + 1).padStart(2, '0')
+  const dayOfMonthStr = String(day.getDate()).padStart(2, '0')
+  const dateKey = `${year}-${month}-${dayOfMonthStr}`
   const dayNotes = notes[dateKey] || []
 
   useEffect(() => {

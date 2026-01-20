@@ -1,5 +1,6 @@
 import { FC, useCallback, useRef, useState } from "react"
-import { FlatList, ListRenderItem, View, ViewStyle, TouchableOpacity, TextStyle, Platform, Modal } from "react-native"
+import { View, ViewStyle, TouchableOpacity, TextStyle, Platform, Modal } from "react-native"
+import { FlashList, FlashListRef } from "@shopify/flash-list"
 import DateTimePicker from "@react-native-community/datetimepicker"
 
 import { DayRow } from "@/components/DayRow"
@@ -32,7 +33,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
     return initialDays
   })
 
-  const flatListRef = useRef<FlatList>(null)
+  const flashListRef = useRef<FlashListRef<DayItem>>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDate, setSelectedDate] = useState(today)
@@ -60,7 +61,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
       })
     }
     setDays(newDays)
-    // Force FlatList to remount by changing its key
+    // Force FlashList to remount by changing its key
     setListKey(prev => prev + 1)
   }, [])
 
@@ -86,7 +87,12 @@ export const CalendarScreen: FC = function CalendarScreen() {
     scrollToDate(selectedDate)
   }
 
+  const isLoadingRef = useRef(false)
+
   const loadMorePast = useCallback(() => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+    
     setDays((prevDays) => {
       const firstDate = prevDays[0].date
       const newDays: DayItem[] = []
@@ -100,9 +106,17 @@ export const CalendarScreen: FC = function CalendarScreen() {
       }
       return [...newDays, ...prevDays]
     })
+    
+    // Reset loading flag after a short delay
+    setTimeout(() => {
+      isLoadingRef.current = false
+    }, 100)
   }, [])
 
   const loadMoreFuture = useCallback(() => {
+    if (isLoadingRef.current) return
+    isLoadingRef.current = true
+    
     setDays((prevDays) => {
       const lastDate = prevDays[prevDays.length - 1].date
       const newDays: DayItem[] = []
@@ -116,10 +130,15 @@ export const CalendarScreen: FC = function CalendarScreen() {
       }
       return [...prevDays, ...newDays]
     })
+    
+    // Reset loading flag after a short delay
+    setTimeout(() => {
+      isLoadingRef.current = false
+    }, 100)
   }, [])
 
-  const renderItem: ListRenderItem<DayItem> = useCallback(
-    ({ item }) => {
+  const renderItem = useCallback(
+    ({ item }: { item: DayItem }) => {
       const isToday =
         item.date.getDate() === today.getDate() &&
         item.date.getMonth() === today.getMonth() &&
@@ -135,26 +154,17 @@ export const CalendarScreen: FC = function CalendarScreen() {
 
   return (
     <Screen preset="fixed" contentContainerStyle={$screenContainer}>
-      <FlatList
+      <FlashList
         key={listKey}
-        ref={flatListRef}
+        ref={flashListRef}
         data={days}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
         initialScrollIndex={INITIAL_DAYS - 7}
-        getItemLayout={(_, index) => ({
-          length: 100,
-          offset: 100 * index,
-          index,
-        })}
         onEndReached={loadMoreFuture}
         onEndReachedThreshold={0.5}
         onStartReached={loadMorePast}
         onStartReachedThreshold={0.5}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-        }}
-        style={$flatList}
       />
       
       <Modal
@@ -199,10 +209,6 @@ export const CalendarScreen: FC = function CalendarScreen() {
 }
 
 const $screenContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $flatList: ViewStyle = {
   flex: 1,
 }
 

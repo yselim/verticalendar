@@ -1,10 +1,9 @@
 import { FC, useEffect, useState } from "react"
-import { ViewStyle, ScrollView, View, TextStyle } from "react-native"
+import { ViewStyle, ScrollView, View, TextStyle, TouchableOpacity } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button } from "@/components/Button"
 import { Note } from "@/components/Note"
 import { AddEditNoteModal } from "@/components/AddEditNoteModal"
 import { useNotesStore } from "@/stores/notesStore"
@@ -64,7 +63,9 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
           <Note key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
         ))}
       </ScrollView>
-      <Button text="Add" onPress={handleAddPress} style={$button} />
+      <TouchableOpacity style={$fab} onPress={handleAddPress} activeOpacity={0.8}>
+        <Text text="+" style={$fabIcon} />
+      </TouchableOpacity>
       <AddEditNoteModal 
         visible={modalVisible} 
         onClose={handleCloseModal} 
@@ -99,6 +100,26 @@ const $notesContainer: ViewStyle = {
   marginTop: 16,
 }
 
-const $button: ViewStyle = {
-  marginTop: 16,
+const $fab: ViewStyle = {
+  position: "absolute",
+  bottom: 24,
+  right: 24,
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+  backgroundColor: "#007AFF",
+  justifyContent: "center",
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 4,
+  elevation: 5,
+}
+
+const $fabIcon: TextStyle = {
+  color: "#fff",
+  fontSize: 32,
+  fontWeight: "300",
+  marginTop: -2,
 }

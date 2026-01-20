@@ -1,7 +1,7 @@
 import { FC, useState, useEffect } from "react"
-import { View, ViewStyle, TextStyle, Platform, Switch } from "react-native"
+import { View, ViewStyle, TextStyle, Platform, Switch, TouchableOpacity } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
-import DateTimePicker from "@react-native-community/datetimepicker"
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -23,6 +23,7 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
     return defaultTime
   })
   const [alarmOn, setAlarmOn] = useState(false)
+  const [showTimePicker, setShowTimePicker] = useState(false)
   const { notes, addNote, updateNote } = useNotesStore()
 
   const isEditing = noteId !== undefined
@@ -53,8 +54,12 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
   const year = currentDate.getFullYear()
   const dayName = DAY_NAMES_FULL[currentDate.getDay()]
 
-  const handleTimeChange = (_event: any, newTime?: Date) => {
-    if (newTime) {
+  const handleTimeChange = (event: DateTimePickerEvent, newTime?: Date) => {
+    // On Android, dismiss the picker on any event (set or dismissed)
+    if (Platform.OS === "android") {
+      setShowTimePicker(false)
+    }
+    if (event.type === "set" && newTime) {
       setSelectedTime(newTime)
     }
   }
@@ -107,14 +112,31 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
         {alarmOn && (
           <View style={$timePickerContainer}>
             <Text text="Time:" style={$timeLabel} />
-            <DateTimePicker
-              value={selectedTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={handleTimeChange}
-              minuteInterval={5}
-              style={$timePicker}
-            />
+            {Platform.OS === "android" ? (
+              <>
+                <TouchableOpacity onPress={() => setShowTimePicker(true)} style={$androidTimeButton}>
+                  <Text text={formatTimeString(selectedTime)} style={$androidTimeText} />
+                </TouchableOpacity>
+                {showTimePicker && (
+                  <DateTimePicker
+                    value={selectedTime}
+                    mode="time"
+                    display="default"
+                    onChange={handleTimeChange}
+                    minuteInterval={5}
+                  />
+                )}
+              </>
+            ) : (
+              <DateTimePicker
+                value={selectedTime}
+                mode="time"
+                display="spinner"
+                onChange={handleTimeChange}
+                minuteInterval={5}
+                style={$timePicker}
+              />
+            )}
           </View>
         )}
       </View>
@@ -195,6 +217,18 @@ const $timeLabel: TextStyle = {
 
 const $timePicker: ViewStyle = {
   flex: 1,
+}
+
+const $androidTimeButton: ViewStyle = {
+  backgroundColor: "#f0f0f0",
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 8,
+}
+
+const $androidTimeText: TextStyle = {
+  fontSize: 18,
+  fontWeight: "500",
 }
 
 const $buttonContainer: ViewStyle = {

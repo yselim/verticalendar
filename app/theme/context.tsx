@@ -79,27 +79,17 @@ export const ThemeProvider: FC<PropsWithChildren<ThemeProviderProps>> = ({
    * systemColorScheme is the value from the device. If undefined, we fall back to "light"
    */
   const themeContext: ImmutableThemeContextModeT = useMemo(() => {
-    const t = initialContext || themeScheme || (!!systemColorScheme ? systemColorScheme : "light")
-    return t === "dark" ? "dark" : "light"
-  }, [initialContext, themeScheme, systemColorScheme])
+    // Always use light theme
+    return "light"
+  }, [])
 
   const navigationTheme: NavTheme = useMemo(() => {
-    switch (themeContext) {
-      case "dark":
-        return NavDarkTheme
-      default:
-        return NavDefaultTheme
-    }
-  }, [themeContext])
+    return NavDefaultTheme
+  }, [])
 
   const theme: Theme = useMemo(() => {
-    switch (themeContext) {
-      case "dark":
-        return darkTheme
-      default:
-        return lightTheme
-    }
-  }, [themeContext])
+    return lightTheme
+  }, [])
 
   useEffect(() => {
     setImperativeTheming(theme)

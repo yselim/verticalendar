@@ -291,6 +291,10 @@ const $settingsButton: ViewStyle = {
   marginLeft: 4,
 }
 
+const $calendarIcon: TextStyle = {
+  fontSize: 18,
+}
+
 const $modalOverlay: ViewStyle = {
   flex: 1,
   backgroundColor: "rgba(0, 0, 0, 0.5)",

@@ -1,8 +1,8 @@
 import { FC, useRef, useState } from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder, Modal } from "react-native"
+import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder, Modal, Platform } from "react-native"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
-import DateTimePicker from "@react-native-community/datetimepicker"
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 
 import { Text } from "@/components/Text"
 import { Icon } from "@/components/Icon"
@@ -24,7 +24,13 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   const opacity = useRef(new Animated.Value(1)).current
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showDatePickerModal, setShowDatePickerModal] = useState(false)
-  const { moveNoteToDate } = useNotesStore()
+  const [showTimePicker, setShowTimePicker] = useState(false)
+  const [selectedTime, setSelectedTime] = useState(() => {
+    const defaultTime = new Date()
+    defaultTime.setHours(10, 0, 0, 0)
+    return defaultTime
+  })
+  const { moveNoteToDate, updateNote } = useNotesStore()
   const SWIPE_DELETE_THRESHOLD = -120
   const SWIPE_MAX = -180
 
@@ -60,6 +66,26 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
       console.log('newDate: ', newDate)
       moveNoteToDate(note.id, newDate)
     }
+  }
+
+  const handleAlarmIconPress = () => {
+    setShowTimePicker(true)
+  }
+
+  const handleTimeChange = (event: DateTimePickerEvent, time?: Date) => {
+    if (Platform.OS === "android") {
+      setShowTimePicker(false)
+    }
+    if (event.type === 'set' && time) {
+      const hours = time.getHours().toString().padStart(2, '0')
+      const minutes = time.getMinutes().toString().padStart(2, '0')
+      const timeString = `${hours}:${minutes}`
+      updateNote(note.id, { note_time: timeString })
+    }
+  }
+
+  const handleRemoveAlarm = () => {
+    updateNote(note.id, { note_time: null })
   }
 
   const handlePress = () => {
@@ -137,10 +163,22 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
     >
       <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
       <View style={$noteContent}>
-        {note.note_time && (
-          <View style={$timeBadge}>
+        {note.note_time ? (
+          <TouchableOpacity 
+            style={$timeBadge} 
+            onPress={handleRemoveAlarm}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Text text={note.note_time} style={$timeText} />
-          </View>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={$alarmOffButton} 
+            onPress={handleAlarmIconPress}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Icon icon="bell" size={18} color={colors.palette.neutral400} />
+          </TouchableOpacity>
         )}
         <Text text={note.description} style={$descriptionText} numberOfLines={2} />
         <TouchableOpacity 
@@ -177,6 +215,16 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
           mode="date"
           display="default"
           onChange={handleDateChange}
+        />
+      )}
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={selectedTime}
+          mode="time"
+          display="default"
+          onChange={handleTimeChange}
+          minuteInterval={5}
         />
       )}
     </Animated.View>
@@ -226,6 +274,10 @@ const $timeText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
   color: colors.palette.neutral800,
+}
+
+const $alarmOffButton: ViewStyle = {
+  padding: 4,
 }
 
 const $settingsButton: ViewStyle = {

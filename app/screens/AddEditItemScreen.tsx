@@ -56,11 +56,13 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen preset="fixed" safeAreaEdges={["bottom"]} contentContainerStyle={$container}>
+      <View style={$handleContainer}>
+        <View style={$handle} />
+      </View>
       <View style={$content}>
         <View style={$titleContainer}>
           <Text text={`${dayNumber} ${monthName} ${year} ${dayName}`} style={$dateText} />
-          {/* <Text text={dayName} style={$dayNameText} /> */}
         </View>
         <TextField
           value={itemText}
@@ -93,6 +95,18 @@ const $container: ViewStyle = {
   flex: 1,
   padding: 16,
   justifyContent: "space-between",
+}
+
+const $handleContainer: ViewStyle = {
+  alignItems: "center",
+  paddingVertical: 8,
+}
+
+const $handle: ViewStyle = {
+  width: 40,
+  height: 4,
+  backgroundColor: "#ccc",
+  borderRadius: 2,
 }
 
 const $content: ViewStyle = {

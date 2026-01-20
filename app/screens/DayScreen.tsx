@@ -1,4 +1,4 @@
-import { FC, useEffect } from "react"
+import { FC, useEffect, useState } from "react"
 import { ViewStyle, ScrollView, View, TextStyle } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
@@ -6,15 +6,19 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { Button } from "@/components/Button"
 import { Note } from "@/components/Note"
+import { AddEditNoteModal } from "@/components/AddEditNoteModal"
 import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { MONTH_NAMES_FULL, DAY_NAMES_FULL } from "@/utils/constants"
+import { INote } from "types/types"
 
 type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">
 
 export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigation }) {
   const { date } = route.params
   const { notes, fetchNotes, deleteNote } = useNotesStore()
+  const [modalVisible, setModalVisible] = useState(false)
+  const [editingNote, setEditingNote] = useState<INote | null>(null)
 
   const currentDate = new Date(date)
   // Use local date to avoid timezone issues
@@ -31,7 +35,18 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
   const dayName = DAY_NAMES_FULL[currentDate.getDay()]
 
   const handleAddPress = () => {
-    navigation.navigate("AddEditItem", { date })
+    setEditingNote(null)
+    setModalVisible(true)
+  }
+
+  const handleEditNote = (note: INote) => {
+    setEditingNote(note)
+    setModalVisible(true)
+  }
+
+  const handleCloseModal = () => {
+    setModalVisible(false)
+    setEditingNote(null)
   }
 
   const handleDeleteNote = (noteId: number) => {
@@ -46,10 +61,16 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
       </View>
       <ScrollView style={$notesContainer}>
         {dayNotes.map((note) => (
-          <Note key={note.id} note={note} onDelete={handleDeleteNote} />
+          <Note key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
         ))}
       </ScrollView>
       <Button text="Add" onPress={handleAddPress} style={$button} />
+      <AddEditNoteModal 
+        visible={modalVisible} 
+        onClose={handleCloseModal} 
+        date={date}
+        note={editingNote}
+      />
     </Screen>
   )
 }

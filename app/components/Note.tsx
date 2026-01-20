@@ -1,7 +1,5 @@
 import { FC, useRef, useState } from "react"
 import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder, Modal, Platform } from "react-native"
-import { useNavigation } from "@react-navigation/native"
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 
 import { Text } from "@/components/Text"
@@ -9,17 +7,14 @@ import { Icon } from "@/components/Icon"
 import { colors } from "@/theme/colors"
 import { useNotesStore } from "@/stores/notesStore"
 import { INote } from "types/types"
-import type { AppStackParamList } from "@/navigators/navigationTypes"
 
 interface NoteProps {
   note: INote
   onDelete?: (noteId: number) => void
+  onEdit?: (note: INote) => void
 }
 
-type NavigationProp = NativeStackNavigationProp<AppStackParamList>
-
-export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
-  const navigation = useNavigation<NavigationProp>()
+export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
   const translateX = useRef(new Animated.Value(0)).current
   const opacity = useRef(new Animated.Value(1)).current
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -103,10 +98,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete }) {
   }
 
   const handlePress = () => {
-    navigation.navigate("AddEditItem", {
-      date: note.note_date,
-      noteId: note.id,
-    })
+    onEdit?.(note)
   }
 
   const handleDelete = () => {

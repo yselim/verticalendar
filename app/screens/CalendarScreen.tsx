@@ -16,9 +16,14 @@ interface DayItem {
   key: string
 }
 
+function getToday() {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d
+}
+
 export const CalendarScreen: FC = function CalendarScreen() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const [today, setToday] = useState<Date>(getToday)
 
   const [days, setDays] = useState<DayItem[]>(() => {
     const initialDays: DayItem[] = []
@@ -66,16 +71,20 @@ export const CalendarScreen: FC = function CalendarScreen() {
     setDays(newDays)
     // Force FlashList to remount by changing its key
     setListKey(prev => prev + 1)
-  }, [])
+  }, [today])
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (nextAppState === "active") {
+        const newToday = getToday()
+        const dateChanged = newToday.getTime() !== today.getTime()
         const elapsed = Date.now() - lastActivatedAtRef.current
-        if (elapsed >= RECENTERING_THRESHOLD_MS) {
-          // Re-center on today
-          const newToday = new Date()
-          newToday.setHours(0, 0, 0, 0)
+        if (dateChanged) {
+          // Day has changed — update today state and scroll to new today
+          setToday(newToday)
+          scrollToDate(newToday)
+        } else if (elapsed >= RECENTERING_THRESHOLD_MS) {
+          // Same day but long absence — re-center on today
           scrollToDate(newToday)
         }
         lastActivatedAtRef.current = Date.now()
@@ -86,7 +95,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
 
     const subscription = AppState.addEventListener("change", handleAppStateChange)
     return () => subscription.remove()
-  }, [scrollToDate])
+  }, [scrollToDate, today])
 
   const handleGoToDate = () => {
     setMenuOpen(false)

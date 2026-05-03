@@ -4,6 +4,7 @@ export interface INote {
   note_time: string | null
   description: string
   order_index: number
+  notification_id: string | null
 }
 
 export interface INotesCollection{

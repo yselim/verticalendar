@@ -1,6 +1,7 @@
 import { create } from "zustand"
 
 import { getItemsByDate, updateItem, addItemToDB, deleteNoteFromDB, updateNoteDate } from "@/utils/database"
+import { scheduleNoteNotification, cancelNoteNotification } from "@/utils/notifications"
 import { INote, INotesCollection } from "types/types"
 
 interface NotesStore {
@@ -31,6 +32,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       note_time: item.note_time || null,
       description: item.description,
       order_index: item.order_index,
+      notification_id: item.notification_id || null,
     }))
 
     set((state) => ({
@@ -54,6 +56,23 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
 
     const noteId = addItemToDB(noteDate, noteTime, description, nextOrderIndex)
 
+    // Schedule notification if noteTime is provided
+    if (noteTime) {
+      scheduleNoteNotification(noteId as number, description, noteDate, noteTime).then(
+        (notificationId) => {
+          updateItem(noteId as number, description, noteTime, undefined, notificationId)
+          set((state) => {
+            const updatedNotes = { ...state.notes }
+            const idx = updatedNotes[dateKey]?.findIndex((n) => n.id === noteId)
+            if (idx !== undefined && idx !== -1) {
+              updatedNotes[dateKey][idx] = { ...updatedNotes[dateKey][idx], notification_id: notificationId }
+            }
+            return { notes: updatedNotes }
+          })
+        }
+      )
+    }
+
     // Add to local state
     const newNote: INote = {
       id: noteId as number,
@@ -61,6 +80,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
       note_time: noteTime,
       description,
       order_index: nextOrderIndex,
+      notification_id: null,
     }
 
     set((state) => ({
@@ -75,25 +95,67 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     const { description, note_time, order_index } = updatedNote
 
     if (description !== undefined || note_time !== undefined || order_index !== undefined) {
-      // Fetch current description if not provided, since updateItem requires it
+      // Fetch current note if fields are missing
       const allNotes = get().notes
-      let currentDescription = description
-      if (currentDescription === undefined) {
-        for (const dateKey of Object.keys(allNotes)) {
-          const found = allNotes[dateKey].find((n) => n.id === noteId)
-          if (found) { currentDescription = found.description; break }
-        }
+      let currentNote: INote | undefined
+      for (const dateKey of Object.keys(allNotes)) {
+        const found = allNotes[dateKey].find((n) => n.id === noteId)
+        if (found) { currentNote = found; break }
       }
+
+      const currentDescription = description ?? currentNote?.description
       if (currentDescription !== undefined) {
-        updateItem(noteId, currentDescription, note_time, order_index)
+        // Handle notification: note_time is being updated
+        if (note_time !== undefined) {
+          const oldNotificationId = currentNote?.notification_id ?? null
+          // Cancel old notification regardless
+          cancelNoteNotification(oldNotificationId)
+
+          if (note_time) {
+            const noteDate = currentNote?.note_date
+            if (noteDate) {
+              scheduleNoteNotification(noteId, currentDescription, noteDate, note_time).then(
+                (newNotificationId) => {
+                  updateItem(noteId, currentDescription, note_time, order_index, newNotificationId)
+                  set((state) => {
+                    const updatedNotes = { ...state.notes }
+                    Object.keys(updatedNotes).forEach((dateKey) => {
+                      const idx = updatedNotes[dateKey].findIndex((n) => n.id === noteId)
+                      if (idx !== -1) {
+                        updatedNotes[dateKey][idx] = { ...updatedNotes[dateKey][idx], ...updatedNote, notification_id: newNotificationId }
+                      }
+                    })
+                    return { notes: updatedNotes }
+                  })
+                }
+              )
+              // State will be updated in the async callback above
+              return
+            }
+          } else {
+            // note_time cleared — cancel notification and save null
+            updateItem(noteId, currentDescription, null, order_index, null)
+            set((state) => {
+              const updatedNotes = { ...state.notes }
+              Object.keys(updatedNotes).forEach((dateKey) => {
+                const idx = updatedNotes[dateKey].findIndex((n) => n.id === noteId)
+                if (idx !== -1) {
+                  updatedNotes[dateKey][idx] = { ...updatedNotes[dateKey][idx], ...updatedNote, notification_id: null }
+                }
+              })
+              return { notes: updatedNotes }
+            })
+            return
+          }
+        } else {
+          updateItem(noteId, currentDescription, note_time, order_index)
+        }
       }
     }
 
     // Update local state
     set((state) => {
       const updatedNotes = { ...state.notes }
-
-      // Find and update the note in the collection
       Object.keys(updatedNotes).forEach((dateKey) => {
         const noteIndex = updatedNotes[dateKey].findIndex((note) => note.id === noteId)
         if (noteIndex !== -1) {
@@ -103,7 +165,6 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
           }
         }
       })
-
       return { notes: updatedNotes }
     })
   },
@@ -123,6 +184,16 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   },
 
   deleteNote: (noteId: number) => {
+    // Cancel any scheduled notification
+    const allNotes = get().notes
+    for (const dateKey of Object.keys(allNotes)) {
+      const found = allNotes[dateKey].find((n) => n.id === noteId)
+      if (found) {
+        cancelNoteNotification(found.notification_id)
+        break
+      }
+    }
+
     // Delete from database
     deleteNoteFromDB(noteId)
 
@@ -142,6 +213,36 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   moveNoteToDate: (noteId: number, newDate: string) => {
     // Update in database
     updateNoteDate(noteId, newDate)
+
+    // Handle notification: reschedule for new date if note has a time
+    const allNotes = get().notes
+    let noteToMove: INote | undefined
+    for (const dateKey of Object.keys(allNotes)) {
+      const found = allNotes[dateKey].find((n) => n.id === noteId)
+      if (found) { noteToMove = found; break }
+    }
+    if (noteToMove?.note_time) {
+      cancelNoteNotification(noteToMove.notification_id)
+      scheduleNoteNotification(noteId, noteToMove.description, newDate, noteToMove.note_time).then(
+        (newNotificationId) => {
+          updateItem(noteId, noteToMove!.description, noteToMove!.note_time, undefined, newNotificationId)
+          set((state) => {
+            const updatedNotes = { ...state.notes }
+            Object.keys(updatedNotes).forEach((dateKey) => {
+              const idx = updatedNotes[dateKey].findIndex((n) => n.id === noteId)
+              if (idx !== -1) {
+                updatedNotes[dateKey][idx] = { ...updatedNotes[dateKey][idx], notification_id: newNotificationId }
+              }
+            })
+            return { notes: updatedNotes }
+          })
+        }
+      )
+    } else if (noteToMove?.notification_id) {
+      // No time but had a notification — cancel it
+      cancelNoteNotification(noteToMove.notification_id)
+      updateItem(noteId, noteToMove.description, null, undefined, null)
+    }
 
     // Update local state - remove from old date and add to new date
     set((state) => {

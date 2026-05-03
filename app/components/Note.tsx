@@ -120,8 +120,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
   }
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .failOffsetY([-20, 20])
+    .activeOffsetX([-5, 5])
+    .failOffsetY([-10, 10])
     .onUpdate((event) => {
       if (event.translationX > 0) {
         translateX.value = 0

@@ -49,6 +49,8 @@
   "plugins": [
     "expo-localization",
     "expo-font",
+    "@react-native-community/datetimepicker",
+    "expo-sqlite",
     [
       "expo-splash-screen",
       {

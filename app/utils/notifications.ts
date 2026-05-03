@@ -56,7 +56,7 @@ export async function scheduleNoteNotification(
     content: {
       title: "VertiCalendar",
       body: description,
-      sound: "default",
+      sound: true,
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DATE,

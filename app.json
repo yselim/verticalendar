@@ -53,9 +53,7 @@
     "expo-sqlite",
     [
       "expo-notifications",
-      {
-        "sounds": []
-      }
+      {}
     ],
     [
       "expo-splash-screen",

@@ -1,5 +1,5 @@
-import { FC, useCallback, useRef, useState } from "react"
-import { View, ViewStyle, TouchableOpacity, TextStyle } from "react-native"
+import { FC, useCallback, useEffect, useRef, useState } from "react"
+import { View, ViewStyle, TouchableOpacity, TextStyle, AppState, AppStateStatus } from "react-native"
 import { FlashList, FlashListRef } from "@shopify/flash-list"
 import DateTimePicker from "@react-native-community/datetimepicker"
 
@@ -39,6 +39,10 @@ export const CalendarScreen: FC = function CalendarScreen() {
   const [listKey, setListKey] = useState(0)
   const [highlightedDate, setHighlightedDate] = useState<Date | null>(null)
 
+  // Track when app was last in foreground
+  const lastActivatedAtRef = useRef<number>(Date.now())
+  const RECENTERING_THRESHOLD_MS = 10 * 60 * 1000 // 10 minutes
+
   const scrollToDate = useCallback((targetDate: Date) => {
     // Check if target is today
     const isTargetToday = 
@@ -63,6 +67,26 @@ export const CalendarScreen: FC = function CalendarScreen() {
     // Force FlashList to remount by changing its key
     setListKey(prev => prev + 1)
   }, [])
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        const elapsed = Date.now() - lastActivatedAtRef.current
+        if (elapsed >= RECENTERING_THRESHOLD_MS) {
+          // Re-center on today
+          const newToday = new Date()
+          newToday.setHours(0, 0, 0, 0)
+          scrollToDate(newToday)
+        }
+        lastActivatedAtRef.current = Date.now()
+      } else if (nextAppState === "background" || nextAppState === "inactive") {
+        lastActivatedAtRef.current = Date.now()
+      }
+    }
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange)
+    return () => subscription.remove()
+  }, [scrollToDate])
 
   const handleGoToDate = () => {
     setMenuOpen(false)

@@ -56,7 +56,7 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     set((state) => ({
       notes: {
         ...state.notes,
-        [dateKey]: [newNote, ...(state.notes[dateKey] || [])],
+        [dateKey]: [...(state.notes[dateKey] || []), newNote],
       },
     }))
   },

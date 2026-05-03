@@ -10,6 +10,7 @@ import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { MONTH_NAMES_FULL, DAY_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
+import Feather from "@expo/vector-icons/Feather"
 
 type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">
 
@@ -64,7 +65,7 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
         ))}
       </ScrollView>
       <TouchableOpacity style={$fab} onPress={handleAddPress} activeOpacity={0.8}>
-        <Text text="+" style={$fabIcon} />
+        <Feather name="plus" size={22} color="#fff" />
       </TouchableOpacity>
       <AddEditNoteModal 
         visible={modalVisible} 
@@ -117,9 +118,3 @@ const $fab: ViewStyle = {
   elevation: 5,
 }
 
-const $fabIcon: TextStyle = {
-  color: "#fff",
-  fontSize: 32,
-  fontWeight: "300",
-  marginTop: -2,
-}

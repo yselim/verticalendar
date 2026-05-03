@@ -26,7 +26,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
     return defaultTime
   })
   const { moveNoteToDate, updateNote } = useNotesStore()
-  const SWIPE_DELETE_THRESHOLD = -120
+  const SWIPE_DELETE_THRESHOLD = -60
   const SWIPE_MAX = -180
 
   const handleSendToNextDay = () => {
@@ -146,7 +146,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
         }
       },
       onPanResponderRelease: (_, gestureState) => {
-        // If swiped more than 120px to the left, delete
+        // If swiped enough to the left, delete
         if (gestureState.dx < SWIPE_DELETE_THRESHOLD) {
           handleDelete()
         } else {

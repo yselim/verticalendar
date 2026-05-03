@@ -29,7 +29,7 @@ export const addItemToDB = (
 
 export const getItemsByDate = (noteDate: string) => {
   return db.getAllSync(
-    "SELECT * FROM items WHERE note_date = ? ORDER BY order_index ASC, id DESC",
+    "SELECT * FROM items WHERE note_date = ? ORDER BY order_index ASC, id ASC",
     [noteDate],
   )
 }

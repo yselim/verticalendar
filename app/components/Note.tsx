@@ -237,6 +237,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
               display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={handleTimeChange}
               minuteInterval={5}
+              is24Hour={true}
               style={{ width: 240 }}
             />
             {Platform.OS === "ios" && (

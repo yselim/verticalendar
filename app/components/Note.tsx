@@ -89,16 +89,27 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
   const handleTimeChange = (event: DateTimePickerEvent, time?: Date) => {
     if (Platform.OS === "android") {
       setShowTimePicker(false)
+      if (event.type === 'set' && time) {
+        const hours = time.getHours().toString().padStart(2, '0')
+        const minutes = time.getMinutes().toString().padStart(2, '0')
+        updateNote(note.id, { note_time: `${hours}:${minutes}` })
+      }
+    } else {
+      // iOS spinner: just track the selected time, save on modal dismiss
+      if (time) setSelectedTime(time)
     }
-    if (event.type === 'set' && time) {
-      const hours = time.getHours().toString().padStart(2, '0')
-      const minutes = time.getMinutes().toString().padStart(2, '0')
-      const timeString = `${hours}:${minutes}`
-      updateNote(note.id, { note_time: timeString })
-    } else if (event.type === 'dismissed' && note.note_time) {
-      // Only remove alarm if user cancels while editing existing alarm
-      updateNote(note.id, { note_time: null })
-    }
+  }
+
+  const handleTimeConfirm = () => {
+    const hours = selectedTime.getHours().toString().padStart(2, '0')
+    const minutes = selectedTime.getMinutes().toString().padStart(2, '0')
+    updateNote(note.id, { note_time: `${hours}:${minutes}` })
+    setShowTimePicker(false)
+  }
+
+  const handleTimeCancel = () => {
+    updateNote(note.id, { note_time: null })
+    setShowTimePicker(false)
   }
 
   const handlePress = () => {
@@ -212,15 +223,35 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
         />
       )}
 
-      {showTimePicker && (
-        <DateTimePicker
-          value={selectedTime}
-          mode="time"
-          display="default"
-          onChange={handleTimeChange}
-          minuteInterval={5}
-        />
-      )}
+      <Modal
+        visible={showTimePicker}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <Pressable style={$modalOverlay} onPress={() => setShowTimePicker(false)}>
+          <Pressable style={$timePickerContainer} onPress={() => {}}>
+            <DateTimePicker
+              value={selectedTime}
+              mode="time"
+              display={Platform.OS === "ios" ? "spinner" : "default"}
+              onChange={handleTimeChange}
+              minuteInterval={5}
+              style={{ width: 240 }}
+            />
+            {Platform.OS === "ios" && (
+              <View style={$timePickerButtons}>
+                <TouchableOpacity style={[$timePickerBtn, $timePickerCancelBtn]} onPress={handleTimeCancel}>
+                  <Text text="İptal" style={$timePickerCancelText} />
+                </TouchableOpacity>
+                <TouchableOpacity style={[$timePickerBtn, $timePickerOkBtn]} onPress={handleTimeConfirm}>
+                  <Text text="Tamam" style={$timePickerOkText} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
       </Animated.View>
     </GestureDetector>
   )
@@ -297,6 +328,47 @@ const $modalContent: ViewStyle = {
   padding: 16,
   width: "80%",
   gap: 8,
+}
+
+const $timePickerContainer: ViewStyle = {
+  backgroundColor: "#fff",
+  borderRadius: 12,
+  padding: 16,
+  alignItems: "center",
+}
+
+const $timePickerButtons: ViewStyle = {
+  flexDirection: "row",
+  gap: 12,
+  marginTop: 8,
+  width: "100%",
+}
+
+const $timePickerBtn: ViewStyle = {
+  flex: 1,
+  paddingVertical: 12,
+  borderRadius: 8,
+  alignItems: "center",
+}
+
+const $timePickerCancelBtn: ViewStyle = {
+  backgroundColor: colors.palette.neutral200,
+}
+
+const $timePickerOkBtn: ViewStyle = {
+  backgroundColor: "#555",
+}
+
+const $timePickerCancelText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: colors.palette.neutral700,
+}
+
+const $timePickerOkText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#fff",
 }
 
 const $modalButton: ViewStyle = {

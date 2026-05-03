@@ -74,8 +74,19 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
   updateNote: (noteId: number, updatedNote: Partial<INote>) => {
     const { description, note_time, order_index } = updatedNote
 
-    if (description !== undefined) {
-      updateItem(noteId, description, note_time, order_index)
+    if (description !== undefined || note_time !== undefined || order_index !== undefined) {
+      // Fetch current description if not provided, since updateItem requires it
+      const allNotes = get().notes
+      let currentDescription = description
+      if (currentDescription === undefined) {
+        for (const dateKey of Object.keys(allNotes)) {
+          const found = allNotes[dateKey].find((n) => n.id === noteId)
+          if (found) { currentDescription = found.description; break }
+        }
+      }
+      if (currentDescription !== undefined) {
+        updateItem(noteId, currentDescription, note_time, order_index)
+      }
     }
 
     // Update local state

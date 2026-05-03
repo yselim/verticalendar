@@ -10,6 +10,7 @@ interface NotesStore {
   updateNote: (noteId: number, updatedNote: Partial<INote>) => void
   deleteNote: (noteId: number) => void
   moveNoteToDate: (noteId: number, newDate: string) => void
+  reorderNotes: (dateKey: string, reorderedNotes: INote[]) => void
 }
 
 export const useNotesStore = create<NotesStore>((set, get) => ({
@@ -40,17 +41,26 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     }))
   },
 
-  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex: number = 0) => {
-    const noteId = addItemToDB(noteDate, noteTime, description, orderIndex)
+  addNote: (noteDate: string, noteTime: string | null, description: string, orderIndex?: number) => {
+    const dateKey = noteDate
+    const existingNotes = get().notes[dateKey] || []
+
+    // Place new note at the end by using max order_index + 1
+    const nextOrderIndex = orderIndex !== undefined
+      ? orderIndex
+      : existingNotes.length > 0
+        ? Math.max(...existingNotes.map((n) => n.order_index)) + 1
+        : 0
+
+    const noteId = addItemToDB(noteDate, noteTime, description, nextOrderIndex)
 
     // Add to local state
-    const dateKey = noteDate
     const newNote: INote = {
       id: noteId as number,
       note_date: noteDate,
       note_time: noteTime,
       description,
-      order_index: orderIndex,
+      order_index: nextOrderIndex,
     }
 
     set((state) => ({
@@ -83,6 +93,20 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
         }
       })
 
+      return { notes: updatedNotes }
+    })
+  },
+
+  reorderNotes: (dateKey: string, reorderedNotes: INote[]) => {
+    // 1. Update in database
+    reorderedNotes.forEach((note, index) => {
+      updateItem(note.id, note.description, note.note_time, index)
+    })
+
+    // 2. Update local state
+    set((state) => {
+      const updatedNotes = { ...state.notes }
+      updatedNotes[dateKey] = reorderedNotes.map((n, idx) => ({ ...n, order_index: idx }))
       return { notes: updatedNotes }
     })
   },

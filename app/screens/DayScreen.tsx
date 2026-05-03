@@ -11,12 +11,13 @@ import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { MONTH_NAMES_FULL, DAY_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
 import Feather from "@expo/vector-icons/Feather"
+import DraggableFlatList, { ScaleDecorator, RenderItemParams } from "react-native-draggable-flatlist"
 
 type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">
 
 export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigation }) {
   const { date } = route.params
-  const { notes, fetchNotes, deleteNote } = useNotesStore()
+  const { notes, fetchNotes, deleteNote, reorderNotes } = useNotesStore()
   const [modalVisible, setModalVisible] = useState(false)
   const [editingNote, setEditingNote] = useState<INote | null>(null)
 
@@ -53,19 +54,36 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
     deleteNote(noteId)
   }
 
+  const renderItem = ({ item, drag, isActive }: RenderItemParams<INote>) => {
+    return (
+      <ScaleDecorator>
+        <Note 
+          note={item} 
+          onDelete={handleDeleteNote} 
+          onEdit={handleEditNote} 
+          onLongPress={drag}
+          disabled={isActive}
+        />
+      </ScaleDecorator>
+    )
+  }
+
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <View style={$titleContainer}>
         <Text text={`${dayNumber} ${monthName} ${year}`} preset="heading" style={$dateText} />
         <Text text={dayName} preset="heading" style={$dayNameText} />
       </View>
-      <ScrollView style={$notesContainer}>
-        {dayNotes.map((note) => (
-          <Note key={note.id} note={note} onDelete={handleDeleteNote} onEdit={handleEditNote} />
-        ))}
-      </ScrollView>
+      <DraggableFlatList
+        data={dayNotes}
+        onDragEnd={({ data }) => reorderNotes(dateKey, data)}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={renderItem}
+        containerStyle={$notesContainer}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      />
       <TouchableOpacity style={$fab} onPress={handleAddPress} activeOpacity={0.8}>
-        <Feather name="plus" size={22} color="#fff" />
+        <Feather name="plus" size={32} color="#fff" />
       </TouchableOpacity>
       <AddEditNoteModal 
         visible={modalVisible} 

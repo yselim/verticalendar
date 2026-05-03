@@ -23,6 +23,7 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { initI18n } from "./i18n"
 import { AppNavigator } from "./navigators/AppNavigator"
@@ -93,16 +94,18 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <KeyboardProvider>
-        <ThemeProvider>
-          <AppNavigator
-            linking={linking}
-            initialState={initialNavigationState}
-            onStateChange={onNavigationStateChange}
-          />
-        </ThemeProvider>
-      </KeyboardProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <KeyboardProvider>
+          <ThemeProvider>
+            <AppNavigator
+              linking={linking}
+              initialState={initialNavigationState}
+              onStateChange={onNavigationStateChange}
+            />
+          </ThemeProvider>
+        </KeyboardProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   )
 }

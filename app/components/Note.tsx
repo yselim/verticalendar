@@ -1,5 +1,7 @@
-import { FC, useRef, useState } from "react"
-import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Animated, PanResponder, Modal, Platform } from "react-native"
+import { FC, useState } from "react"
+import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Modal, Platform } from "react-native"
+import { GestureDetector, Gesture } from "react-native-gesture-handler"
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 
 import { Text } from "@/components/Text"
@@ -12,11 +14,13 @@ interface NoteProps {
   note: INote
   onDelete?: (noteId: number) => void
   onEdit?: (note: INote) => void
+  onLongPress?: () => void
+  disabled?: boolean
 }
 
-export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
-  const translateX = useRef(new Animated.Value(0)).current
-  const opacity = useRef(new Animated.Value(1)).current
+export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLongPress, disabled }) {
+  const translateX = useSharedValue(0)
+  const opacity = useSharedValue(1)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [showDatePickerModal, setShowDatePickerModal] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
@@ -103,71 +107,55 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
 
   const handleDelete = () => {
     // Animate out before deleting
-    Animated.parallel([
-      Animated.timing(translateX, {
-        toValue: -500,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onDelete?.(note.id)
+    translateX.value = withTiming(-500, { duration: 300 })
+    opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+      if (finished && onDelete) {
+        runOnJS(onDelete)(note.id)
+      }
     })
   }
 
   const resetPosition = () => {
-    Animated.spring(translateX, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 100,
-      friction: 8,
-    }).start()
+    translateX.value = withSpring(0, { stiffness: 100, damping: 15 })
   }
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        // Only respond to horizontal swipes
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy)
-      },
-      onPanResponderGrant: () => {
-        translateX.stopAnimation()
-      },
-      onPanResponderMove: (_, gestureState) => {
-        // Only allow left swipe (negative dx)
-        if (gestureState.dx < 0) {
-          translateX.setValue(Math.max(gestureState.dx, SWIPE_MAX))
-        } else {
-          translateX.setValue(0)
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        // If swiped enough to the left, delete
-        if (gestureState.dx < SWIPE_DELETE_THRESHOLD) {
-          handleDelete()
-        } else {
-          // Otherwise, spring back to original position
-          resetPosition()
-        }
-      },
-      onPanResponderTerminate: () => {
-        resetPosition()
-      },
-    }),
-  ).current
+  const panGesture = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-20, 20])
+    .onUpdate((event) => {
+      if (event.translationX > 0) {
+        translateX.value = 0
+      } else if (event.translationX < SWIPE_MAX) {
+        translateX.value = SWIPE_MAX
+      } else {
+        translateX.value = event.translationX
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationX < SWIPE_DELETE_THRESHOLD) {
+        runOnJS(handleDelete)()
+      } else {
+        runOnJS(resetPosition)()
+      }
+    })
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+      opacity: opacity.value,
+    }
+  })
 
   return (
-    <Animated.View
-      style={[
-        { transform: [{ translateX }], opacity },
-      ]}
-      {...panResponder.panHandlers}
-    >
-      <TouchableOpacity style={$noteContainer} onPress={handlePress} activeOpacity={0.7}>
+    <GestureDetector gesture={panGesture}>
+      <Animated.View style={animatedStyle}>
+      <TouchableOpacity 
+        style={$noteContainer} 
+        onPress={handlePress} 
+        onLongPress={onLongPress}
+        disabled={disabled}
+        activeOpacity={0.7}
+      >
       <View style={$noteContent}>
         {note.note_time ? (
           <TouchableOpacity 
@@ -233,7 +221,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit }) {
           minuteInterval={5}
         />
       )}
-    </Animated.View>
+      </Animated.View>
+    </GestureDetector>
   )
 }
 

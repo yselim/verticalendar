@@ -68,7 +68,7 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
           description: itemText.trim(),
         })
       } else {
-        addNote(noteDate, null, itemText.trim(), 0)
+        addNote(noteDate, null, itemText.trim())
       }
       onClose()
     }

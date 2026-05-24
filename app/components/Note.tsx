@@ -118,7 +118,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
 
   const handleDelete = () => {
     // Animate out before deleting
-    translateX.value = withTiming(-500, { duration: 300 })
+    const direction = translateX.value > 0 ? 1 : -1;
+    translateX.value = withTiming(direction * 500, { duration: 300 })
     opacity.value = withTiming(0, { duration: 300 }, (finished) => {
       if (finished && onDelete) {
         runOnJS(onDelete)(note.id)
@@ -134,8 +135,8 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
     .activeOffsetX([-5, 5])
     .failOffsetY([-10, 10])
     .onUpdate((event) => {
-      if (event.translationX > 0) {
-        translateX.value = 0
+      if (event.translationX > Math.abs(SWIPE_MAX)) {
+        translateX.value = Math.abs(SWIPE_MAX)
       } else if (event.translationX < SWIPE_MAX) {
         translateX.value = SWIPE_MAX
       } else {
@@ -143,7 +144,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
       }
     })
     .onEnd((event) => {
-      if (event.translationX < SWIPE_DELETE_THRESHOLD) {
+      if (event.translationX < SWIPE_DELETE_THRESHOLD || event.translationX > Math.abs(SWIPE_DELETE_THRESHOLD)) {
         runOnJS(handleDelete)()
       } else {
         runOnJS(resetPosition)()

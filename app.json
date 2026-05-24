@@ -9,8 +9,6 @@
   "updates": {
     "fallbackToCacheTimeout": 0
   },
-  "newArchEnabled": true,
-  "jsEngine": "hermes",
   "assetBundlePatterns": [
     "**/*"
   ],
@@ -22,7 +20,6 @@
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",

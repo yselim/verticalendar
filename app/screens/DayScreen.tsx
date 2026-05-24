@@ -10,7 +10,7 @@ import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { MONTH_NAMES_FULL, DAY_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
-import Feather from "@expo/vector-icons/Feather"
+import Feather from "@react-native-vector-icons/feather"
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from "react-native-draggable-flatlist"
 
 type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">

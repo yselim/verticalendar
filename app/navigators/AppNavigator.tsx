@@ -18,7 +18,7 @@ import { NotesScreen } from "@/screens/NotesScreen"
 import { initDatabase } from "@/utils/database"
 import { useAppTheme } from "@/theme/context"
 import { Icon } from "@/components/Icon"
-import Ionicons from "@expo/vector-icons/Ionicons"
+import Ionicons from "@react-native-vector-icons/ionicons"
 
 import type { AppStackParamList, MainTabParamList, NavigationProps } from "./navigationTypes"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"

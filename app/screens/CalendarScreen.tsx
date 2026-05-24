@@ -201,6 +201,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
           value={today}
           mode="date"
           display="calendar"
+          firstDayOfWeek={1}
           onChange={handleDateChange}
         />
       )}

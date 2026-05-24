@@ -220,6 +220,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
           value={new Date(note.note_date + 'T12:00:00')}
           mode="date"
           display="default"
+          firstDayOfWeek={1}
           onChange={handleDateChange}
         />
       )}
@@ -236,6 +237,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
               value={selectedTime}
               mode="time"
               display={Platform.OS === "ios" ? "spinner" : "default"}
+              firstDayOfWeek={1}
               onChange={handleTimeChange}
               minuteInterval={5}
               is24Hour={true}

@@ -4,10 +4,11 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, useNavigation } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
+import * as Notifications from "expo-notifications"
 
 import Config from "@/config"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
@@ -79,6 +80,26 @@ const AppStack = () => {
   const {
     theme: { colors },
   } = useAppTheme()
+
+  const navigation = useNavigation<any>()
+  const lastNotificationResponse = Notifications.useLastNotificationResponse()
+  const processedNotificationId = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (
+      lastNotificationResponse &&
+      lastNotificationResponse.notification.request.content.data?.noteDate &&
+      lastNotificationResponse.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER &&
+      lastNotificationResponse.notification.request.identifier !== processedNotificationId.current
+    ) {
+      processedNotificationId.current = lastNotificationResponse.notification.request.identifier
+      const noteDate = lastNotificationResponse.notification.request.content.data.noteDate
+      // Delay slightly to ensure navigators are fully mounted if app just started
+      setTimeout(() => {
+        navigation.navigate("Day", { date: noteDate })
+      }, 100)
+    }
+  }, [lastNotificationResponse, navigation])
 
   return (
     <Stack.Navigator

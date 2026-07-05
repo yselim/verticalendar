@@ -12,7 +12,7 @@ import {
   reminderSoundOptions,
   setReminderSoundFilename,
 } from "@/utils/reminderSounds"
-import { backupDatabase, restoreDatabase } from "@/utils/backup"
+import { backupDatabase, restoreDatabase, downloadBackup } from "@/utils/backup"
 
 export const SettingsScreen: FC = function SettingsScreen() {
   const [showSoundModal, setShowSoundModal] = useState(false)
@@ -50,8 +50,16 @@ export const SettingsScreen: FC = function SettingsScreen() {
           
           <TouchableOpacity style={$rowButton} activeOpacity={0.8} onPress={backupDatabase}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Ionicons name="cloud-download-outline" size={20} color="#555" />
-              <Text text="Verileri Yedekle (.db)" style={$rowTitle} />
+              <Ionicons name="share-outline" size={20} color="#555" />
+              <Text text="Verileri Paylaş" style={$rowTitle} />
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={$rowButton} activeOpacity={0.8} onPress={downloadBackup}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Ionicons name="download-outline" size={20} color="#555" />
+              <Text text="Cihaza Kaydet (.db)" style={$rowTitle} />
             </View>
             <Ionicons name="chevron-forward" size={18} color="#ccc" />
           </TouchableOpacity>

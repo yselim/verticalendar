@@ -382,4 +382,11 @@ export const updateToDoItemCompletedInDB = (id: number, completed: boolean) => {
   ])
 }
 
+export const updateToDoItemContentInDB = (id: number, content: string) => {
+  db.runSync("UPDATE todo_items SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+    content,
+    id,
+  ])
+}
+
 export default db

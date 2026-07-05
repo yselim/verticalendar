@@ -37,6 +37,7 @@ import {
   reorderToDoItemsInDB,
   updateToDoListTitleInDB,
   updateToDoItemCompletedInDB,
+  updateToDoItemContentInDB,
 } from "@/utils/database"
 import type { IToDoItem } from "types/types"
 
@@ -46,6 +47,7 @@ interface ToDoItemRowProps {
   item: IToDoItem
   isActive: boolean
   onLongPress: () => void
+  onPress: (item: IToDoItem) => void
   onDelete: (itemId: number) => void
   onToggleComplete: (itemId: number, checked: boolean) => void
 }
@@ -57,6 +59,7 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
   item,
   isActive,
   onLongPress,
+  onPress,
   onDelete,
   onToggleComplete,
 }) {
@@ -126,6 +129,7 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
             },
           ]}
           activeOpacity={0.8}
+          onPress={() => onPress(item)}
           onLongPress={onLongPress}
           disabled={isActive}
         >
@@ -174,6 +178,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   const [items, setItems] = useState<IToDoItem[]>([])
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [newItemText, setNewItemText] = useState("")
+  const [editingItem, setEditingItem] = useState<IToDoItem | null>(null)
 
   const createListInputRef = useRef<TextInput>(null)
   const addItemInputRef = useRef<TextInput>(null)
@@ -232,8 +237,14 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
     const trimmed = newItemText.trim()
     if (!trimmed) return
 
-    addToDoItemToDB(currentListId, trimmed)
+    if (editingItem) {
+      updateToDoItemContentInDB(editingItem.id, trimmed)
+    } else {
+      addToDoItemToDB(currentListId, trimmed)
+    }
+
     setNewItemText("")
+    setEditingItem(null)
     setShowAddItemModal(false)
     loadItems()
   }
@@ -300,6 +311,11 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
           item={item}
           isActive={isActive}
           onLongPress={drag}
+          onPress={(it) => {
+            setEditingItem(it)
+            setNewItemText(it.content)
+            setShowAddItemModal(true)
+          }}
           onDelete={handleDeleteItem}
           onToggleComplete={handleToggleComplete}
         />
@@ -416,15 +432,30 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
         visible={showAddItemModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowAddItemModal(false)}
+        onRequestClose={() => {
+          setShowAddItemModal(false)
+          setEditingItem(null)
+          setNewItemText("")
+        }}
       >
         <KeyboardAvoidingView
           style={$modalOverlay}
           behavior={Platform.OS === "ios" ? "padding" : "padding"}
         >
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowAddItemModal(false)} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              setShowAddItemModal(false)
+              setEditingItem(null)
+              setNewItemText("")
+            }}
+          />
           <Pressable style={$modalSheet} onPress={() => {}}>
-            <Text text="Yeni Satır" weight="medium" style={$modalTitle} />
+            <Text
+              text={editingItem ? "Satırı Düzenle" : "Yeni Satır"}
+              weight="medium"
+              style={$modalTitle}
+            />
             <TextInput
               ref={addItemInputRef}
               value={newItemText}
@@ -447,7 +478,11 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
             <View style={$modalButtonsRow}>
               <TouchableOpacity
                 style={[$modalBtn, $cancelBtn]}
-                onPress={() => setShowAddItemModal(false)}
+                onPress={() => {
+                  setShowAddItemModal(false)
+                  setEditingItem(null)
+                  setNewItemText("")
+                }}
                 activeOpacity={0.85}
               >
                 <Text text="İptal" style={$cancelText} />
@@ -457,7 +492,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
                 onPress={handleAddItem}
                 activeOpacity={0.85}
               >
-                <Text text="Ekle" style={$addText} />
+                <Text text={editingItem ? "Güncelle" : "Ekle"} style={$addText} />
               </TouchableOpacity>
             </View>
           </Pressable>

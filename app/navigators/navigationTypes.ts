@@ -19,6 +19,7 @@ export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>
   Day: { date: string }
   NoteEditor: { tabId: number; noteId?: number }
+  AddEditToDoList: { listId?: number; tabId: number }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }

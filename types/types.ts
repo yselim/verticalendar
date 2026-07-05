@@ -23,6 +23,7 @@ export interface ITabNote {
 export interface IToDoList {
   id: number
   tab_id: number
+  title: string
   order_index: number
   created_at: string
   updated_at: string

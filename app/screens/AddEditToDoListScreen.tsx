@@ -1,5 +1,6 @@
 import { FC, useCallback, useMemo, useState } from "react"
 import {
+  Alert,
   Modal,
   Pressable,
   TextInput,
@@ -28,8 +29,10 @@ import {
   addToDoListToDB,
   addToDoItemToDB,
   deleteToDoItemFromDB,
+  getToDoListById,
   getToDoItemsByListId,
   reorderToDoItemsInDB,
+  updateToDoListTitleInDB,
   updateToDoItemCompletedInDB,
 } from "@/utils/database"
 import type { IToDoItem } from "types/types"
@@ -157,9 +160,14 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
 
 export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function AddEditToDoListScreen({
   route,
+  navigation,
 }) {
   const { listId, tabId } = route.params
   const [currentListId, setCurrentListId] = useState<number | null>(listId ?? null)
+  const [listTitle, setListTitle] = useState("")
+  const [titleInput, setTitleInput] = useState("")
+  const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const [showCreateListModal, setShowCreateListModal] = useState(listId == null)
   const [items, setItems] = useState<IToDoItem[]>([])
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [newItemText, setNewItemText] = useState("")
@@ -174,6 +182,12 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
       return
     }
 
+    const listRow = getToDoListById(currentListId) as { title?: string } | null
+    if (listRow?.title) {
+      setListTitle(listRow.title)
+      setTitleInput(listRow.title)
+    }
+
     const rows = getToDoItemsByListId(currentListId) as IToDoItem[]
     setItems(rows)
   }, [currentListId])
@@ -185,19 +199,49 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   )
 
   const handleAddItem = () => {
+    if (!currentListId) {
+      setShowCreateListModal(true)
+      return
+    }
+
     const trimmed = newItemText.trim()
     if (!trimmed) return
 
-    let targetListId = currentListId
-    if (!targetListId) {
-      targetListId = addToDoListToDB(tabId) as number
-      setCurrentListId(targetListId)
-    }
-
-    addToDoItemToDB(targetListId, trimmed)
+    addToDoItemToDB(currentListId, trimmed)
     setNewItemText("")
     setShowAddItemModal(false)
     loadItems()
+  }
+
+  const handleCreateList = () => {
+    const trimmed = titleInput.trim()
+    if (trimmed.length < 1) {
+      Alert.alert("Geçersiz başlık", "Liste başlığı en az 1 karakter olmalı.")
+      return
+    }
+
+    const createdId = addToDoListToDB(tabId, trimmed) as number
+    setCurrentListId(createdId)
+    setListTitle(trimmed)
+    setTitleInput(trimmed)
+    setShowCreateListModal(false)
+  }
+
+  const saveEditedTitle = () => {
+    if (!currentListId) return
+
+    const trimmed = titleInput.trim()
+    if (trimmed.length < 1) {
+      Alert.alert("Geçersiz başlık", "Liste başlığı en az 1 karakter olmalı.")
+      setTitleInput(listTitle)
+      setIsEditingTitle(false)
+      return
+    }
+
+    updateToDoListTitleInDB(currentListId, trimmed)
+    setListTitle(trimmed)
+    setTitleInput(trimmed)
+    setIsEditingTitle(false)
   }
 
   const handleDeleteItem = useCallback(
@@ -240,6 +284,33 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+      <View style={$titleContainer}>
+        {isEditingTitle ? (
+          <TextInput
+            value={titleInput}
+            onChangeText={setTitleInput}
+            style={[$titleInput, { color: colors.text, borderColor: colors.border }]}
+            autoFocus
+            maxLength={120}
+            returnKeyType="done"
+            onSubmitEditing={saveEditedTitle}
+            onBlur={saveEditedTitle}
+          />
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              if (!currentListId) return
+              setTitleInput(listTitle)
+              setIsEditingTitle(true)
+            }}
+            disabled={!currentListId}
+          >
+            <Text text={listTitle || "Liste Başlığı"} weight="bold" size="lg" />
+          </TouchableOpacity>
+        )}
+      </View>
+
       <DraggableFlatList
         data={items}
         onDragEnd={({ data }) => handleReorder(data)}
@@ -257,10 +328,60 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
       <TouchableOpacity
         style={[$fab, { backgroundColor: colors.tint }]}
         activeOpacity={0.85}
-        onPress={() => setShowAddItemModal(true)}
+        onPress={() => {
+          if (!currentListId) {
+            setShowCreateListModal(true)
+            return
+          }
+          setShowAddItemModal(true)
+        }}
       >
         <Text text="+" style={$fabText} />
       </TouchableOpacity>
+
+      <Modal
+        visible={showCreateListModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => navigation.goBack()}
+      >
+        <Pressable style={$modalOverlay} onPress={() => navigation.goBack()}>
+          <Pressable style={$modalSheet} onPress={() => {}}>
+            <Text text="Liste Başlığı" weight="medium" style={$modalTitle} />
+            <TextInput
+              value={titleInput}
+              onChangeText={setTitleInput}
+              placeholder="Liste başlığı yaz..."
+              placeholderTextColor={colors.textDim}
+              style={[
+                $input,
+                {
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.background,
+                },
+              ]}
+              autoFocus
+              multiline={false}
+              returnKeyType="done"
+              onSubmitEditing={handleCreateList}
+            />
+
+            <View style={$modalButtonsRow}>
+              <TouchableOpacity
+                style={[$modalBtn, $cancelBtn]}
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.85}
+              >
+                <Text text="İptal" style={$cancelText} />
+              </TouchableOpacity>
+              <TouchableOpacity style={[$modalBtn, $addBtn]} onPress={handleCreateList} activeOpacity={0.85}>
+                <Text text="Liste Ekle" style={$addText} />
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal
         visible={showAddItemModal}
@@ -315,6 +436,22 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
 
 const $container: ViewStyle = {
   flex: 1,
+}
+
+const $titleContainer: ViewStyle = {
+  minHeight: 56,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: 16,
+}
+
+const $titleInput: TextStyle = {
+  minWidth: "80%",
+  textAlign: "center",
+  fontSize: 24,
+  fontWeight: "700",
+  borderBottomWidth: 1,
+  paddingVertical: 4,
 }
 
 const $listContent: ViewStyle = {

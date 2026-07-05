@@ -8,6 +8,7 @@ import { Text } from "@/components/Text"
 import { Icon } from "@/components/Icon"
 import { useAppTheme } from "@/theme/context"
 import { MainTabScreenProps } from "@/navigators/navigationTypes"
+import Ionicons from "@react-native-vector-icons/ionicons"
 import {
   deleteTabNoteFromDB,
   getTabNotesByTabId,
@@ -18,6 +19,21 @@ import type { ITabNote } from "types/types"
 
 const TABS = [1, 2] as const
 
+const notesPalette = {
+  background: "#F8F6FF",
+  title: "#2F2552",
+  text: "#3D3366",
+  muted: "#6F6695",
+  tabActiveBg: "#E7E1FF",
+  tabInactiveBg: "#F8F6FF",
+  tabActiveBorder: "#6B5AD4",
+  tabInactiveBorder: "#C9C2ED",
+  rowBg: "#FFFFFF",
+  rowBorder: "#DAD4F4",
+  menuButton: "#5C4DBA",
+  fab: "#6B5AD4",
+} as const
+
 type NotesScreenProps = MainTabScreenProps<"Notlar">
 
 export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigation }) {
@@ -26,9 +42,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
   const [menuNoteId, setMenuNoteId] = useState<number | null>(null)
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
 
-  const {
-    theme: { colors },
-  } = useAppTheme()
+  useAppTheme()
 
   const loadTabNotes = useCallback((tabId: number) => {
     const rows = getTabNotesByTabId(tabId) as ITabNote[]
@@ -83,7 +97,8 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
           style={[
             $noteRow,
             {
-              borderBottomColor: colors.border,
+              borderBottomColor: notesPalette.rowBorder,
+              backgroundColor: notesPalette.rowBg,
               opacity: isActive ? 0.85 : 1,
             },
           ]}
@@ -99,7 +114,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
             onPress={() => setMenuNoteId(item.id)}
           >
-            <Icon icon="settings" size={18} color={colors.textDim} />
+            <Icon icon="settings" size={18} color={notesPalette.muted} />
           </TouchableOpacity>
         </TouchableOpacity>
       </ScaleDecorator>
@@ -107,7 +122,17 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$container}>
+    <Screen
+      preset="fixed"
+      safeAreaEdges={["top"]}
+      backgroundColor={notesPalette.background}
+      contentContainerStyle={$container}
+    >
+      <View style={$titleContainer}>
+        <Ionicons name="document-text-outline" size={20} color={notesPalette.title} />
+        <Text text="NOTLAR" weight="bold" size="lg" style={{ color: notesPalette.title }} />
+      </View>
+
       <View style={$tabWrapper}>
         {TABS.map((tabId) => {
           const isActive = activeTab === tabId
@@ -118,14 +143,14 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
                 $tab,
                 {
                   width: "50%",
-                  borderColor: isActive ? colors.tint : colors.border,
-                  backgroundColor: isActive ? colors.palette.neutral100 : colors.background,
+                  borderColor: isActive ? notesPalette.tabActiveBorder : notesPalette.tabInactiveBorder,
+                  backgroundColor: isActive ? notesPalette.tabActiveBg : notesPalette.tabInactiveBg,
                 },
               ]}
               onPress={() => onTabPress(tabId)}
               activeOpacity={0.8}
             >
-              <Text text={`${tabId}`} style={[isActive ? $activeTabText : $tabText, { color: colors.text }]} />
+              <Text text={`${tabId}`} style={[isActive ? $activeTabText : $tabText, { color: notesPalette.text }]} />
             </TouchableOpacity>
           )
         })}
@@ -140,7 +165,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
           contentContainerStyle={$listContent}
           ListEmptyComponent={
             <View style={$emptyContainer}>
-              <Text text="No notes yet." style={{ color: colors.textDim }} />
+              <Text text="No notes yet." style={{ color: notesPalette.muted }} />
             </View>
           }
         />
@@ -155,7 +180,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
         <Pressable style={$modalOverlay} onPress={() => setMenuNoteId(null)}>
           <View style={$modalContent}>
             <TouchableOpacity
-              style={$modalButton}
+              style={[$modalButton, { backgroundColor: notesPalette.menuButton }]}
               onPress={() => {
                 if (menuNoteId !== null) {
                   setConfirmDeleteNoteId(menuNoteId)
@@ -168,7 +193,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={$modalButton}
+              style={[$modalButton, { backgroundColor: notesPalette.menuButton }]}
               onPress={() => {
                 if (menuNoteId !== null) handleMoveToOtherTab(menuNoteId)
               }}
@@ -212,7 +237,7 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
       </Modal>
 
       <TouchableOpacity
-        style={[$fab, { backgroundColor: colors.tint }]}
+        style={[$fab, { backgroundColor: notesPalette.fab }]}
         activeOpacity={0.85}
         onPress={() => navigation.navigate("NoteEditor", { tabId: activeTab })}
       >
@@ -224,6 +249,14 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
 
 const $container: ViewStyle = {
   flex: 1,
+}
+
+const $titleContainer: ViewStyle = {
+  minHeight: 52,
+  flexDirection: "row",
+  gap: 8,
+  alignItems: "center",
+  justifyContent: "center",
 }
 
 const $tabWrapper: ViewStyle = {

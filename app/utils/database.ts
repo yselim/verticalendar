@@ -29,6 +29,7 @@ export const initDatabase = () => {
     CREATE TABLE IF NOT EXISTS todo_lists (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       tab_id INTEGER NOT NULL,
+      title TEXT NOT NULL DEFAULT 'Yeni Liste',
       order_index INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -67,6 +68,12 @@ export const initDatabase = () => {
 
   try {
     db.execSync(`ALTER TABLE todo_items ADD COLUMN completed INTEGER NOT NULL DEFAULT 0;`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  try {
+    db.execSync(`ALTER TABLE todo_lists ADD COLUMN title TEXT NOT NULL DEFAULT 'Yeni Liste';`)
   } catch {
     // Column already exists — ignore
   }
@@ -187,15 +194,15 @@ export const moveTabNoteToTabInDB = (id: number, targetTabId: number) => {
   )
 }
 
-export const addToDoListToDB = (tabId: number, orderIndex?: number) => {
+export const addToDoListToDB = (tabId: number, title: string, orderIndex?: number) => {
   const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM todo_lists WHERE tab_id = ?", [
     tabId,
   ]) as { max_order?: number | null } | null
   const nextOrderIndex = orderIndex !== undefined ? orderIndex : (maxRow?.max_order ?? -1) + 1
 
   const result = db.runSync(
-    "INSERT INTO todo_lists (tab_id, order_index) VALUES (?, ?)",
-    [tabId, nextOrderIndex],
+    "INSERT INTO todo_lists (tab_id, title, order_index) VALUES (?, ?, ?)",
+    [tabId, title, nextOrderIndex],
   )
 
   return result.lastInsertRowId
@@ -206,6 +213,7 @@ export const getToDoListsByTabId = (tabId: number) => {
     `SELECT
       l.id,
       l.tab_id,
+      l.title,
       l.order_index,
       l.created_at,
       l.updated_at,
@@ -232,6 +240,17 @@ export const reorderToDoListsInDB = (tabId: number, lists: { id: number }[]) => 
   lists.forEach((list, index) => {
     db.runSync("UPDATE todo_lists SET order_index = ? WHERE id = ? AND tab_id = ?", [index, list.id, tabId])
   })
+}
+
+export const getToDoListById = (id: number) => {
+  return db.getFirstSync(
+    "SELECT id, tab_id, title, order_index, created_at, updated_at FROM todo_lists WHERE id = ?",
+    [id],
+  )
+}
+
+export const updateToDoListTitleInDB = (id: number, title: string) => {
+  db.runSync("UPDATE todo_lists SET title = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [title, id])
 }
 
 export const moveToDoListToTabInDB = (id: number, targetTabId: number) => {

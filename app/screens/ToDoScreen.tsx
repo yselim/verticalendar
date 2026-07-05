@@ -18,6 +18,21 @@ import type { IToDoList } from "types/types"
 
 const TABS = [1, 2] as const
 
+const toDoPalette = {
+  background: "#F2FAF7",
+  title: "#0D4A3E",
+  text: "#16584A",
+  muted: "#4B7E73",
+  tabActiveBg: "#DDF3EC",
+  tabInactiveBg: "#F2FAF7",
+  tabActiveBorder: "#26A17B",
+  tabInactiveBorder: "#A7D5C8",
+  rowBg: "#FFFFFF",
+  rowBorder: "#CAE7DE",
+  menuButton: "#1F8E6E",
+  fab: "#1F8E6E",
+} as const
+
 type ToDoScreenProps = MainTabScreenProps<"Listeler">
 
 export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation }) {
@@ -26,9 +41,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
   const [menuListId, setMenuListId] = useState<number | null>(null)
   const [confirmDeleteListId, setConfirmDeleteListId] = useState<number | null>(null)
 
-  const {
-    theme: { colors },
-  } = useAppTheme()
+  useAppTheme()
 
   const loadLists = useCallback((tabId: number) => {
     const rows = getToDoListsByTabId(tabId) as IToDoList[]
@@ -76,7 +89,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
   )
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<IToDoList>) => {
-    const title = item.first_item?.trim() || "Yeni ToDo Listesi"
+    const title = item.title?.trim() || item.first_item?.trim() || "Yeni ToDo Listesi"
 
     return (
       <ScaleDecorator>
@@ -84,7 +97,8 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
           style={[
             $listRow,
             {
-              borderBottomColor: colors.border,
+              borderBottomColor: toDoPalette.rowBorder,
+              backgroundColor: toDoPalette.rowBg,
               opacity: isActive ? 0.85 : 1,
             },
           ]}
@@ -93,8 +107,8 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
           onPress={() => navigation.navigate("AddEditToDoList", { listId: item.id, tabId: activeTab })}
         >
           <View style={$listRowTextContainer}>
-            <Text text={title} numberOfLines={1} weight="medium" />
-            <Text text={`${item.item_count} öğe`} numberOfLines={1} style={{ color: colors.textDim }} size="xxs" />
+            <Text text={title} numberOfLines={1} weight="medium" style={{ color: toDoPalette.text }} />
+            <Text text={`${item.item_count} öğe`} numberOfLines={1} style={{ color: toDoPalette.muted }} size="xxs" />
           </View>
 
           <TouchableOpacity
@@ -103,7 +117,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
             hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
             onPress={() => setMenuListId(item.id)}
           >
-            <Icon icon="settings" size={18} color={colors.textDim} />
+            <Icon icon="settings" size={18} color={toDoPalette.muted} />
           </TouchableOpacity>
         </TouchableOpacity>
       </ScaleDecorator>
@@ -111,7 +125,17 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$container}>
+    <Screen
+      preset="fixed"
+      safeAreaEdges={["top"]}
+      backgroundColor={toDoPalette.background}
+      contentContainerStyle={$container}
+    >
+      <View style={$titleContainer}>
+        <Icon icon="check" size={20} color={toDoPalette.title} />
+        <Text text="LİSTELER" weight="bold" size="lg" style={{ color: toDoPalette.title }} />
+      </View>
+
       <View style={$tabWrapper}>
         {TABS.map((tabId) => {
           const isActive = activeTab === tabId
@@ -122,14 +146,14 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
                 $tab,
                 {
                   width: "50%",
-                  borderColor: isActive ? colors.tint : colors.border,
-                  backgroundColor: isActive ? colors.palette.neutral100 : colors.background,
+                  borderColor: isActive ? toDoPalette.tabActiveBorder : toDoPalette.tabInactiveBorder,
+                  backgroundColor: isActive ? toDoPalette.tabActiveBg : toDoPalette.tabInactiveBg,
                 },
               ]}
               onPress={() => onTabPress(tabId)}
               activeOpacity={0.8}
             >
-              <Text text={`${tabId}`} style={[isActive ? $activeTabText : $tabText, { color: colors.text }]} />
+              <Text text={`${tabId}`} style={[isActive ? $activeTabText : $tabText, { color: toDoPalette.text }]} />
             </TouchableOpacity>
           )
         })}
@@ -144,7 +168,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
           contentContainerStyle={$listContent}
           ListEmptyComponent={
             <View style={$emptyContainer}>
-              <Text text="No lists yet." style={{ color: colors.textDim }} />
+              <Text text="No lists yet." style={{ color: toDoPalette.muted }} />
             </View>
           }
         />
@@ -159,7 +183,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
         <Pressable style={$modalOverlay} onPress={() => setMenuListId(null)}>
           <View style={$modalContent}>
             <TouchableOpacity
-              style={$modalButton}
+              style={[$modalButton, { backgroundColor: toDoPalette.menuButton }]}
               onPress={() => {
                 if (menuListId !== null) {
                   setConfirmDeleteListId(menuListId)
@@ -172,7 +196,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={$modalButton}
+              style={[$modalButton, { backgroundColor: toDoPalette.menuButton }]}
               onPress={() => {
                 if (menuListId !== null) handleMoveToOtherTab(menuListId)
               }}
@@ -216,7 +240,7 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
       </Modal>
 
       <TouchableOpacity
-        style={[$fab, { backgroundColor: colors.tint }]}
+        style={[$fab, { backgroundColor: toDoPalette.fab }]}
         activeOpacity={0.8}
         onPress={handleAddList}
       >
@@ -228,6 +252,14 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
 
 const $container: ViewStyle = {
   flex: 1,
+}
+
+const $titleContainer: ViewStyle = {
+  minHeight: 52,
+  flexDirection: "row",
+  gap: 8,
+  alignItems: "center",
+  justifyContent: "center",
 }
 
 const $tabWrapper: ViewStyle = {

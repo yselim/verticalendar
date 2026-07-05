@@ -91,5 +91,4 @@ Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite)
 - Renkleri düzelt
 - alarm sesi seçilebilmeli (Tüm itemlar için ve tek bir item için ayrı ayrı değişebilmeli)
 - keyboard otomatik açıldığında altta boşluk kalıyor.
-- Listeler ekranında bi listeyi komple kopyala/yapıştır gibi bişey olmalı. Tatile çıkarken yapılacaklar listesini falan kopyalayabilmeliyim.
 - Database yedeği alma. Backup/restore olmalı. (Bunu buluta da gönderebilir. beli bir formatta olur, onu yükler geri.) Bunu için settings screen olacak.

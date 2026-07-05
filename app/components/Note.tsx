@@ -16,9 +16,19 @@ interface NoteProps {
   onEdit?: (note: INote) => void
   onLongPress?: () => void
   disabled?: boolean
+  settingsMode?: "default" | "allCalendarItems"
+  onNoteChanged?: () => void
 }
 
-export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLongPress, disabled }) {
+export const Note: FC<NoteProps> = function Note({
+  note,
+  onDelete,
+  onEdit,
+  onLongPress,
+  disabled,
+  settingsMode = "default",
+  onNoteChanged,
+}) {
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -32,20 +42,33 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
   const { moveNoteToDate, updateNote } = useNotesStore()
   const SWIPE_DELETE_THRESHOLD = -60
   const SWIPE_MAX = -180
+  const today = new Date()
+  const todayDateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const tomorrowDateKey = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`
+  const isOnToday = note.note_date === todayDateKey
+  const isOnTomorrow = note.note_date === tomorrowDateKey
 
-  const handleSendToNextDay = () => {
-    // Parse the note_date and add one day using local date
-    const [year, month, day] = note.note_date.split('-').map(Number)
-    const currentDate = new Date(year, month - 1, day)
-    currentDate.setDate(currentDate.getDate() + 1)
-    
-    const nextYear = currentDate.getFullYear()
-    const nextMonth = String(currentDate.getMonth() + 1).padStart(2, '0')
-    const nextDay = String(currentDate.getDate()).padStart(2, '0')
-    const nextDayStr = `${nextYear}-${nextMonth}-${nextDay}`
-    
-    moveNoteToDate(note.id, nextDayStr)
+  const noteDateLabel = (() => {
+    const [year, month, day] = note.note_date.split("-")
+    return `${day}.${month}.${year}`
+  })()
+
+  const handleSendToToday = () => {
+    if (isOnToday) return
+    const targetDate = todayDateKey
+    moveNoteToDate(note.id, targetDate)
     setShowSettingsModal(false)
+    onNoteChanged?.()
+  }
+
+  const handleSendToTomorrow = () => {
+    if (isOnTomorrow) return
+    const targetDate = tomorrowDateKey
+    moveNoteToDate(note.id, targetDate)
+    setShowSettingsModal(false)
+    onNoteChanged?.()
   }
 
   const handleOpenDatePicker = () => {
@@ -64,6 +87,7 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
 
       console.log('newDate: ', newDate)
       moveNoteToDate(note.id, newDate)
+      onNoteChanged?.()
     }
   }
 
@@ -169,23 +193,28 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
         activeOpacity={0.7}
       >
       <View style={$noteContent}>
-        {note.note_time ? (
-          <TouchableOpacity 
-            style={$timeBadge} 
-            onPress={handleAlarmTimePress}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text text={note.note_time} style={$timeText} />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={$alarmOffButton} 
-            onPress={handleAlarmIconPress}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icon icon="bell" size={18} color={colors.palette.neutral400} />
-          </TouchableOpacity>
-        )}
+        <View style={$dateTimeContainer}>
+          {note.note_time ? (
+            <TouchableOpacity
+              style={$timeBadge}
+              onPress={handleAlarmTimePress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Text text={note.note_time} style={$timeText} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={$alarmOffButton}
+              onPress={handleAlarmIconPress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Icon icon="bell" size={18} color={colors.palette.neutral400} />
+            </TouchableOpacity>
+          )}
+          {settingsMode === "allCalendarItems" && (
+            <Text text={noteDateLabel} style={$allCalendarDateText} />
+          )}
+        </View>
         <Text text={note.description} style={$descriptionText} numberOfLines={2} />
         <TouchableOpacity 
           style={$settingsButton} 
@@ -205,11 +234,24 @@ export const Note: FC<NoteProps> = function Note({ note, onDelete, onEdit, onLon
       >
         <Pressable style={$modalOverlay} onPress={() => setShowSettingsModal(false)}>
           <View style={$modalContent}>
+            <TouchableOpacity
+              style={[$modalButton, isOnToday && $modalButtonDisabled]}
+              onPress={handleSendToToday}
+              activeOpacity={0.8}
+              disabled={isOnToday}
+            >
+              <Text text="Bugüne Gönder" style={[$modalButtonText, isOnToday && $modalButtonTextDisabled]} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[$modalButton, isOnTomorrow && $modalButtonDisabled]}
+              onPress={handleSendToTomorrow}
+              activeOpacity={0.8}
+              disabled={isOnTomorrow}
+            >
+              <Text text="Yarına Gönder" style={[$modalButtonText, isOnTomorrow && $modalButtonTextDisabled]} />
+            </TouchableOpacity>
             <TouchableOpacity style={$modalButton} onPress={handleOpenDatePicker} activeOpacity={0.8}>
               <Text text="Bir tarihe gönder" style={$modalButtonText} />
-            </TouchableOpacity>
-            <TouchableOpacity style={$modalButton} onPress={handleSendToNextDay} activeOpacity={0.8}>
-              <Text text="Ertesi güne gönder" style={$modalButtonText} />
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -293,6 +335,12 @@ const $descriptionText: TextStyle = {
   color: colors.palette.neutral800,
 }
 
+const $dateTimeContainer: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 6,
+}
+
 const $timeBadge: ViewStyle = {
   backgroundColor: "#f6d61e7e",
   borderRadius: 6,
@@ -304,6 +352,16 @@ const $timeText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
   color: colors.palette.neutral800,
+}
+
+const $allCalendarDateText: TextStyle = {
+  fontSize: 12,
+  color: colors.palette.neutral800,
+  fontWeight: "600",
+  backgroundColor: "#d9f2e6",
+  borderRadius: 6,
+  paddingHorizontal: 6,
+  paddingVertical: 4,
 }
 
 const $alarmOffButton: ViewStyle = {
@@ -387,6 +445,14 @@ const $modalButtonText: TextStyle = {
   color: "#fff",
   fontSize: 16,
   fontWeight: "600",
+}
+
+const $modalButtonDisabled: ViewStyle = {
+  backgroundColor: colors.palette.neutral300,
+}
+
+const $modalButtonTextDisabled: TextStyle = {
+  color: colors.palette.neutral600,
 }
 
 const $deleteButton: ViewStyle = {

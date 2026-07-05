@@ -100,6 +100,24 @@ export const getItemsByDate = (noteDate: string) => {
   )
 }
 
+export const getPastCalendarItemsFromNow = () => {
+  return db.getAllSync(
+    `SELECT *
+     FROM items
+     WHERE datetime(note_date || ' ' || COALESCE(note_time, '23:59'), 'localtime') < datetime('now', 'localtime')
+     ORDER BY datetime(note_date || ' ' || COALESCE(note_time, '23:59'), 'localtime') DESC, order_index ASC, id ASC`,
+  )
+}
+
+export const getFutureCalendarItemsFromNow = () => {
+  return db.getAllSync(
+    `SELECT *
+     FROM items
+     WHERE datetime(note_date || ' ' || COALESCE(note_time, '23:59'), 'localtime') >= datetime('now', 'localtime')
+     ORDER BY datetime(note_date || ' ' || COALESCE(note_time, '23:59'), 'localtime') ASC, order_index ASC, id ASC`,
+  )
+}
+
 export const deleteNoteFromDB = (id: number) => {
   db.runSync("DELETE FROM items WHERE id = ?", [id])
 }

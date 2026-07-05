@@ -16,6 +16,7 @@ import { CalendarScreen } from "@/screens/CalendarScreen"
 import { DayScreen } from "@/screens/DayScreen"
 import { ToDoScreen } from "@/screens/ToDoScreen"
 import { NotesScreen } from "@/screens/NotesScreen"
+import { AllCalendarItemsScreen } from "@/screens/AllCalendarItemsScreen"
 import { NoteEditorScreen } from "../screens/NoteEditorScreen"
 import { AddEditToDoListScreen } from "../screens/AddEditToDoListScreen"
 import { initDatabase } from "@/utils/database"
@@ -116,6 +117,7 @@ const AppStack = () => {
     >
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Day" component={DayScreen} />
+      <Stack.Screen name="AllCalendarItems" component={AllCalendarItemsScreen} />
       <Stack.Screen name="NoteEditor" component={NoteEditorScreen} />
       <Stack.Screen name="AddEditToDoList" component={AddEditToDoListScreen} />
       {/** 🔥 Your screens go here */}

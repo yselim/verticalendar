@@ -2,11 +2,15 @@ import { FC, useCallback, useEffect, useRef, useState } from "react"
 import { View, ViewStyle, TouchableOpacity, TextStyle, AppState, AppStateStatus } from "react-native"
 import { FlashList, FlashListRef } from "@shopify/flash-list"
 import DateTimePicker from "@react-native-community/datetimepicker"
+import Ionicons from "@react-native-vector-icons/ionicons"
+import { useNavigation } from "@react-navigation/native"
 
 import { DayRow } from "@/components/DayRow"
 import { Screen } from "@/components/Screen"
 import { Icon } from "@/components/Icon"
 import { Text } from "@/components/Text"
+import type { AppStackParamList } from "@/navigators/navigationTypes"
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 const INITIAL_DAYS = 100 // Days to load in each direction initially
 const LOAD_MORE_DAYS = 50 // Days to add when reaching the end
@@ -23,6 +27,7 @@ function getToday() {
 }
 
 export const CalendarScreen: FC = function CalendarScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
   const [today, setToday] = useState<Date>(getToday)
 
   const [days, setDays] = useState<DayItem[]>(() => {
@@ -100,6 +105,11 @@ export const CalendarScreen: FC = function CalendarScreen() {
   const handleGoToDate = () => {
     setMenuOpen(false)
     setShowDatePicker(true)
+  }
+
+  const handleGoToAllCalendarItems = () => {
+    setMenuOpen(false)
+    navigation.navigate("AllCalendarItems")
   }
 
   const handleGoToToday = () => {
@@ -208,10 +218,16 @@ export const CalendarScreen: FC = function CalendarScreen() {
 
       {menuOpen && (
         <View style={$menuContainer}>
+          <TouchableOpacity style={$menuButton} onPress={handleGoToAllCalendarItems} activeOpacity={0.8}>
+            <Ionicons name="list-outline" size={18} color="#fff" />
+            <Text text="Tüm Hatırlatmalar" style={$menuButtonText} />
+          </TouchableOpacity>
           <TouchableOpacity style={$menuButton} onPress={handleGoToDate} activeOpacity={0.8}>
+            <Ionicons name="calendar-outline" size={18} color="#fff" />
             <Text text="Bir Tarihe Git" style={$menuButtonText} />
           </TouchableOpacity>
           <TouchableOpacity style={$menuButton} onPress={handleGoToToday} activeOpacity={0.8}>
+            <Ionicons name="locate-outline" size={18} color="#fff" />
             <Text text="Bugüne Git" style={$menuButtonText} />
           </TouchableOpacity>
         </View>
@@ -254,6 +270,9 @@ const $menuContainer: ViewStyle = {
 
 const $menuButton: ViewStyle = {
   backgroundColor: "#555",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 8,
   paddingHorizontal: 16,
   paddingVertical: 12,
   borderRadius: 8,

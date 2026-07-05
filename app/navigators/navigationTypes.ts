@@ -18,6 +18,7 @@ export type MainTabParamList = {
 export type AppStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>
   Day: { date: string }
+  AllCalendarItems: undefined
   NoteEditor: { tabId: number; noteId?: number }
   AddEditToDoList: { listId?: number; tabId: number }
   // 🔥 Your screens go here

@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import { FC, useState } from "react"
 import { Modal, Pressable, TouchableOpacity, View, ViewStyle, TextStyle } from "react-native"
 import Ionicons from "@react-native-vector-icons/ionicons"
 import { useAudioPlayer } from "expo-audio"
@@ -17,12 +17,6 @@ export const SettingsScreen: FC = function SettingsScreen() {
   const [showSoundModal, setShowSoundModal] = useState(false)
   const [selectedFilename, setSelectedFilename] = useState(getReminderSoundFilename())
   const previewPlayer = useAudioPlayer()
-
-  useEffect(() => {
-    return () => {
-      previewPlayer.pause()
-    }
-  }, [previewPlayer])
 
   const handleSelectSound = (filename: string) => {
     setReminderSoundFilename(filename)

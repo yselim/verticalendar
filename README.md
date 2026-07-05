@@ -87,9 +87,7 @@ Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite)
 
 
 ---- DİĞER YAPILACAKLAR ---
-- Tüm geçmiş item'lar ve tüm gelecek item'lar tek listede görülebilmeli
 - Renkleri düzelt
-- alarm sesi seçilebilmeli (Tüm itemlar için ve tek bir item için ayrı ayrı değişebilmeli)
 - keyboard otomatik açıldığında altta boşluk kalıyor.
 - Database yedeği alma. Backup/restore olmalı. (Bunu buluta da gönderebilir. beli bir formatta olur, onu yükler geri.) Bunu için settings screen olacak.
 - Tüm geçmişi sil butonu

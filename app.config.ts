@@ -18,7 +18,7 @@ export default ({ config }: ConfigContext): Partial<ExpoConfig> => {
   const plugins = [...(config.plugins ?? [])]
 
   // Add required plugins if they are not already present in app.json
-  const requiredPlugins = ["expo-audio", "expo-sharing"]
+  const requiredPlugins = ["expo-audio", "expo-sharing", "expo-updates"]
   
   requiredPlugins.forEach((plugin) => {
     if (!plugins.includes(plugin)) {

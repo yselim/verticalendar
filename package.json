@@ -58,6 +58,7 @@
     "expo-splash-screen": "~56.0.12",
     "expo-sqlite": "~56.0.5",
     "expo-system-ui": "~56.0.5",
+    "expo-updates": "~56.0.21",
     "i18next": "^23.14.0",
     "intl-pluralrules": "^2.0.1",
     "react": "19.2.3",

@@ -33,6 +33,7 @@ import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
 import { requestNotificationPermissions } from "./utils/notifications"
 import * as storage from "./utils/storage"
+import * as Updates from "expo-updates"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 
@@ -71,6 +72,23 @@ export function App() {
 
   const [areFontsLoaded, fontLoadError] = useFonts(customFontsToLoad)
   const [isI18nInitialized, setIsI18nInitialized] = useState(false)
+
+  useEffect(() => {
+    async function checkForUpdates() {
+      if (__DEV__) return
+      try {
+        const update = await Updates.checkForUpdateAsync()
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync()
+          await Updates.reloadAsync()
+        }
+      } catch (error) {
+        // You can also add an alert here to notify the user
+        console.log("Error checking for updates:", error)
+      }
+    }
+    checkForUpdates()
+  }, [])
 
   useEffect(() => {
     initI18n()

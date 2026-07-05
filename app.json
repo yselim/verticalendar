@@ -7,7 +7,9 @@
   "userInterfaceStyle": "automatic",
   "icon": "./assets/images/app-icon-all.png",
   "updates": {
-    "fallbackToCacheTimeout": 0
+    "url": "https://u.expo.dev/ce39307f-f4ba-4e88-9b66-ed4bed2fcd64",
+    "fallbackToCacheTimeout": 0,
+    "checkAutomatically": "ON_LOAD"
   },
   "assetBundlePatterns": [
     "**/*"

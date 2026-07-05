@@ -1,5 +1,5 @@
-import { FC, useState, useEffect } from "react"
-import { View, ViewStyle, TextStyle } from "react-native"
+import { FC, useState, useEffect, useRef } from "react"
+import { View, ViewStyle, TextStyle, TextInput } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
 import { Screen } from "@/components/Screen"
@@ -17,8 +17,13 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
   const { date, noteId } = route.params
   const [itemText, setItemText] = useState("")
   const { notes, addNote, updateNote } = useNotesStore()
+  const textFieldRef = useRef<TextInput>(null)
 
   const isEditing = noteId !== undefined
+
+  useEffect(() => {
+    setTimeout(() => textFieldRef.current?.focus(), 150)
+  }, [])
 
   // Find existing note if editing
   useEffect(() => {
@@ -65,11 +70,11 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
           <Text text={`${dayNumber} ${monthName} ${year} ${dayName}`} style={$dateText} />
         </View>
         <TextField
+          ref={textFieldRef}
           value={itemText}
           onChangeText={setItemText}
           placeholder="Yazmaya başla..."
           style={$textField}
-          autoFocus
         />
       </View>
       <View style={$buttonContainer}>

@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Alert,
   KeyboardAvoidingView,
@@ -175,9 +175,31 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   const [showAddItemModal, setShowAddItemModal] = useState(false)
   const [newItemText, setNewItemText] = useState("")
 
+  const createListInputRef = useRef<TextInput>(null)
+  const addItemInputRef = useRef<TextInput>(null)
+  const editTitleInputRef = useRef<TextInput>(null)
+
   const {
     theme: { colors },
   } = useAppTheme()
+
+  useEffect(() => {
+    if (showCreateListModal) {
+      setTimeout(() => createListInputRef.current?.focus(), 150)
+    }
+  }, [showCreateListModal])
+
+  useEffect(() => {
+    if (showAddItemModal) {
+      setTimeout(() => addItemInputRef.current?.focus(), 150)
+    }
+  }, [showAddItemModal])
+
+  useEffect(() => {
+    if (isEditingTitle) {
+      setTimeout(() => editTitleInputRef.current?.focus(), 150)
+    }
+  }, [isEditingTitle])
 
   const loadItems = useCallback(() => {
     if (!currentListId) {
@@ -290,10 +312,10 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
       <View style={$titleContainer}>
         {isEditingTitle ? (
           <TextInput
+            ref={editTitleInputRef}
             value={titleInput}
             onChangeText={setTitleInput}
             style={[$titleInput, { color: colors.text, borderColor: colors.border }]}
-            autoFocus
             maxLength={120}
             returnKeyType="done"
             onSubmitEditing={saveEditedTitle}
@@ -356,6 +378,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
           <Pressable style={$modalSheet} onPress={() => {}}>
             <Text text="Liste Başlığı" weight="medium" style={$modalTitle} />
             <TextInput
+              ref={createListInputRef}
               value={titleInput}
               onChangeText={setTitleInput}
               placeholder="Liste başlığı yaz..."
@@ -368,7 +391,6 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
                   backgroundColor: colors.background,
                 },
               ]}
-              autoFocus
               multiline={false}
               returnKeyType="done"
               onSubmitEditing={handleCreateList}
@@ -402,11 +424,12 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
         >
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowAddItemModal(false)} />
           <Pressable style={$modalSheet} onPress={() => {}}>
-            <Text text="Yeni ToDo Öğesi" weight="medium" style={$modalTitle} />
+            <Text text="Yeni Satır" weight="medium" style={$modalTitle} />
             <TextInput
+              ref={addItemInputRef}
               value={newItemText}
               onChangeText={setNewItemText}
-              placeholder="Bir satır yaz..."
+              placeholder=""
               placeholderTextColor={colors.textDim}
               style={[
                 $input,
@@ -416,7 +439,6 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
                   backgroundColor: colors.background,
                 },
               ]}
-              autoFocus
               multiline={false}
               returnKeyType="done"
               onSubmitEditing={handleAddItem}

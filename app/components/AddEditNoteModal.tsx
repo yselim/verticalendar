@@ -42,7 +42,7 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   useEffect(() => {
     if (visible) {
       setItemText(isEditing && note ? note.description : "")
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setTimeout(() => inputRef.current?.focus(), 150)
     }
   }, [visible, note])
 
@@ -95,7 +95,6 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
             placeholder=""
             placeholderTextColor={colors.textDim}
             style={[$input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-            autoFocus
             multiline={false}
             returnKeyType="done"
             onSubmitEditing={handleSave}

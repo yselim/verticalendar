@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import { Alert, TextInput, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
@@ -15,10 +15,15 @@ export const NoteEditorScreen: FC<NoteEditorScreenProps> = function NoteEditorSc
   const [content, setContent] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const isEditing = noteId !== undefined
+  const inputRef = useRef<TextInput>(null)
 
   const {
     theme: { colors },
   } = useAppTheme()
+
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 150)
+  }, [])
 
   useEffect(() => {
     if (!isEditing || !noteId) return
@@ -53,6 +58,7 @@ export const NoteEditorScreen: FC<NoteEditorScreenProps> = function NoteEditorSc
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <TextInput
+        ref={inputRef}
         style={[
           $editor,
           {

@@ -16,6 +16,9 @@ import "tsx/cjs"
  */
 module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
   const existingPlugins = config.plugins ?? []
+  const plugins = existingPlugins.includes("expo-audio")
+    ? existingPlugins
+    : [...existingPlugins, "expo-audio"]
 
   return {
     ...config,
@@ -36,6 +39,6 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
         ],
       },
     },
-    plugins: [...existingPlugins],
+    plugins,
   }
 }

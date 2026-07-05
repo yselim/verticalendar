@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications"
 import { Platform } from "react-native"
+import { getReminderSoundFilename } from "@/utils/reminderSounds"
 
 // Configure how notifications are shown when app is in foreground
 Notifications.setNotificationHandler({
@@ -44,11 +45,15 @@ export async function scheduleNoteNotification(
   const granted = await requestNotificationPermissions()
   if (!granted) return null
 
+  const soundFilename = getReminderSoundFilename()
+  let channelId: string | undefined
+
   if (Platform.OS === "android") {
-    await Notifications.setNotificationChannelAsync("default", {
+    channelId = `reminder-${soundFilename.replace(/[^a-zA-Z0-9]/g, "")}`
+    await Notifications.setNotificationChannelAsync(channelId, {
       name: "Default",
       importance: Notifications.AndroidImportance.HIGH,
-      sound: "default",
+      sound: soundFilename,
     })
   }
 
@@ -56,7 +61,8 @@ export async function scheduleNoteNotification(
     content: {
       title: "VertiCalendar",
       body: description,
-      sound: true,
+      sound: soundFilename,
+      ...(channelId ? { channelId } : {}),
       data: {
         noteDate,
         noteId

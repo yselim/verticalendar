@@ -50,7 +50,15 @@
     "expo-sqlite",
     [
       "expo-notifications",
-      {}
+      {
+        "sounds": [
+          "./app/assets/notifications/notif_ebcrosby_notification_1.wav",
+          "./app/assets/notifications/notif_jfrecords_vmax_sourcream.wav",
+          "./app/assets/notifications/notif_nevak36_bird_notification.mp3",
+          "./app/assets/notifications/notif_nevak36_notification.mp3",
+          "./app/assets/notifications/notif_allesyt_studio_grand_notification.wav"
+        ]
+      }
     ],
     [
       "expo-splash-screen",

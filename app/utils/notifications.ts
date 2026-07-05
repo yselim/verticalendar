@@ -2,6 +2,13 @@ import * as Notifications from "expo-notifications"
 import { Platform } from "react-native"
 import { getReminderSoundFilename } from "@/utils/reminderSounds"
 
+const ANDROID_CHANNEL_VERSION = "v2"
+
+function getAndroidReminderChannelId(soundFilename: string): string {
+  const safeSoundKey = soundFilename.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
+  return `reminder-${safeSoundKey}-${ANDROID_CHANNEL_VERSION}`
+}
+
 // Configure how notifications are shown when app is in foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -49,7 +56,7 @@ export async function scheduleNoteNotification(
   let channelId: string | undefined
 
   if (Platform.OS === "android") {
-    channelId = `reminder-${soundFilename.replace(/[^a-zA-Z0-9]/g, "")}`
+    channelId = getAndroidReminderChannelId(soundFilename)
     await Notifications.setNotificationChannelAsync(channelId, {
       name: "Default",
       importance: Notifications.AndroidImportance.HIGH,

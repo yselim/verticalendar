@@ -67,21 +67,21 @@ export const AddEditItemScreen: FC<AddEditItemScreenProps> = function AddEditIte
         <TextField
           value={itemText}
           onChangeText={setItemText}
-          placeholder="Enter item description"
+          placeholder="Yazmaya başla..."
           style={$textField}
           autoFocus
         />
       </View>
       <View style={$buttonContainer}>
         <Button 
-          text="Cancel" 
+          text="İptal" 
           onPress={() => navigation.goBack()} 
           style={$cancelButton} 
           preset="default"
           LeftAccessory={(props) => <Icon icon="x" size={18} style={{marginRight: 8}} />}
         />
         <Button 
-          text="Save" 
+          text="Kaydet" 
           onPress={handleSave} 
           style={$saveButton}
           LeftAccessory={(props) => <Icon icon="check" size={18} style={{marginRight: 8}} />}

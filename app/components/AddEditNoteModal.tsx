@@ -1,20 +1,19 @@
-import { FC, useState, useEffect, useRef } from "react"
+import { FC, useEffect, useRef, useState } from "react"
 import {
-  View,
-  ViewStyle,
-  TextStyle,
-  Modal,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  StyleSheet,
   TextInput,
+  TextStyle,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native"
 
 import { Text } from "@/components/Text"
-import { TextField } from "@/components/TextField"
-import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
 import { useNotesStore } from "@/stores/notesStore"
+import { useAppTheme } from "@/theme/context"
 import { DAY_NAMES_FULL, MONTH_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
 
@@ -34,21 +33,16 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   const [itemText, setItemText] = useState("")
   const { addNote, updateNote } = useNotesStore()
   const inputRef = useRef<TextInput>(null)
+  const {
+    theme: { colors },
+  } = useAppTheme()
 
   const isEditing = note !== null && note !== undefined
 
-  // Reset or populate text when modal opens
   useEffect(() => {
     if (visible) {
-      if (isEditing && note) {
-        setItemText(note.description)
-      } else {
-        setItemText("")
-      }
-      // Focus the input after a short delay to ensure modal is fully rendered
-      setTimeout(() => {
-        inputRef.current?.focus()
-      }, 100)
+      setItemText(isEditing && note ? note.description : "")
+      setTimeout(() => inputRef.current?.focus(), 100)
     }
   }, [visible, note])
 
@@ -59,19 +53,15 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   const dayName = DAY_NAMES_FULL[currentDate.getDay()]
 
   const handleSave = () => {
-    if (itemText.trim()) {
-      const d = new Date(date)
-      const noteDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-
-      if (isEditing && note) {
-        updateNote(note.id, {
-          description: itemText.trim(),
-        })
-      } else {
-        addNote(noteDate, null, itemText.trim())
-      }
-      onClose()
+    if (!itemText.trim()) return
+    const d = new Date(date)
+    const noteDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    if (isEditing && note) {
+      updateNote(note.id, { description: itemText.trim() })
+    } else {
+      addNote(noteDate, null, itemText.trim())
     }
+    onClose()
   }
 
   const handleCancel = () => {
@@ -79,67 +69,71 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
     onClose()
   }
 
+  if (!visible) return null
+
   return (
-    <Modal visible={visible} transparent={true} animationType="slide" onRequestClose={handleCancel}>
+    <View style={$overlay}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleCancel} />
       <KeyboardAvoidingView
-        style={$modalContainer}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        keyboardVerticalOffset={0}
       >
-        <Pressable style={$backdrop} onPress={handleCancel} />
-        <View style={$modalContent}>
+        <View style={$sheet}>
           <View style={$handleContainer}>
             <View style={$handle} />
           </View>
 
-          <TextField
+          <Text
+            text={`${dayNumber} ${monthName} ${year} ${dayName}`}
+            style={$dateText}
+          />
+
+          <TextInput
             ref={inputRef}
             value={itemText}
             onChangeText={setItemText}
-            placeholder="Enter item description"
-            style={$textField}
+            placeholder=""
+            placeholderTextColor={colors.textDim}
+            style={[$input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+            autoFocus
+            multiline={false}
+            returnKeyType="done"
+            onSubmitEditing={handleSave}
           />
-          <View style={$buttonContainer}>
-            <Button
-              text="İptal"
-              onPress={handleCancel}
-              style={$cancelButton}
-              preset="default"
-              LeftAccessory={(props) => <Icon icon="x" size={18} style={{ marginRight: 8 }} />}
-            />
-            <Button
-              text="Kaydet"
-              onPress={handleSave}
-              style={$saveButton}
-              LeftAccessory={(props) => <Icon icon="check" size={18} style={{ marginRight: 8 }} />}
-            />
+
+          <View style={$buttonsRow}>
+            <TouchableOpacity style={[$btn, $cancelBtn]} onPress={handleCancel} activeOpacity={0.85}>
+              <Text text="İptal" style={$cancelText} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[$btn, $saveBtn]} onPress={handleSave} activeOpacity={0.85}>
+              <Text text="Kaydet" style={$saveText} />
+            </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </View>
   )
 }
 
-const $modalContainer: ViewStyle = {
-  flex: 1,
+const $overlay: ViewStyle = {
+  ...StyleSheet.absoluteFill,
+  zIndex: 1000,
   justifyContent: "flex-end",
+  backgroundColor: "rgba(0, 0, 0, 0.35)",
 }
 
-const $backdrop: ViewStyle = {
-  flex: 1,
-  backgroundColor: "rgba(0, 0, 0, 0.5)",
-}
-
-const $modalContent: ViewStyle = {
+const $sheet: ViewStyle = {
   backgroundColor: "#fff",
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  padding: 16,
-  paddingBottom: 32,
+  borderTopLeftRadius: 16,
+  borderTopRightRadius: 16,
+  paddingHorizontal: 16,
+  paddingTop: 16,
+  paddingBottom: 24,
 }
 
 const $handleContainer: ViewStyle = {
   alignItems: "center",
-  paddingVertical: 8,
+  marginBottom: 12,
 }
 
 const $handle: ViewStyle = {
@@ -149,29 +143,50 @@ const $handle: ViewStyle = {
   borderRadius: 2,
 }
 
-const $titleContainer: ViewStyle = {
-  alignItems: "center",
+const $dateText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#222",
   marginBottom: 12,
 }
 
-const $dateText: TextStyle = {
+const $input: TextStyle = {
+  minHeight: 44,
+  borderWidth: 1,
+  borderRadius: 10,
+  paddingHorizontal: 12,
+  marginBottom: 12,
   fontSize: 16,
 }
 
-const $textField: ViewStyle = {
-  marginTop: 8,
-}
-
-const $buttonContainer: ViewStyle = {
+const $buttonsRow: ViewStyle = {
   flexDirection: "row",
-  gap: 32,
-  marginTop: 16,
+  gap: 12,
 }
 
-const $cancelButton: ViewStyle = {
+const $btn: ViewStyle = {
   flex: 1,
+  minHeight: 46,
+  borderRadius: 10,
+  alignItems: "center",
+  justifyContent: "center",
 }
 
-const $saveButton: ViewStyle = {
-  flex: 1,
+const $cancelBtn: ViewStyle = {
+  backgroundColor: "#E5E7EB",
+}
+
+const $saveBtn: ViewStyle = {
+  backgroundColor: "#22C55E",
+}
+
+const $cancelText: TextStyle = {
+  fontSize: 15,
+  fontWeight: "600",
+}
+
+const $saveText: TextStyle = {
+  color: "#fff",
+  fontSize: 15,
+  fontWeight: "600",
 }

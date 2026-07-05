@@ -1,8 +1,11 @@
 import { FC, useCallback, useMemo, useState } from "react"
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
+  StyleSheet,
   TextInput,
   TextStyle,
   TouchableOpacity,
@@ -345,7 +348,11 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
         animationType="slide"
         onRequestClose={() => navigation.goBack()}
       >
-        <Pressable style={$modalOverlay} onPress={() => navigation.goBack()}>
+        <KeyboardAvoidingView
+          style={$modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => navigation.goBack()} />
           <Pressable style={$modalSheet} onPress={() => {}}>
             <Text text="Liste Başlığı" weight="medium" style={$modalTitle} />
             <TextInput
@@ -380,7 +387,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
               </TouchableOpacity>
             </View>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal
@@ -389,7 +396,11 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
         animationType="slide"
         onRequestClose={() => setShowAddItemModal(false)}
       >
-        <Pressable style={$modalOverlay} onPress={() => setShowAddItemModal(false)}>
+        <KeyboardAvoidingView
+          style={$modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "padding"}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowAddItemModal(false)} />
           <Pressable style={$modalSheet} onPress={() => {}}>
             <Text text="Yeni ToDo Öğesi" weight="medium" style={$modalTitle} />
             <TextInput
@@ -428,7 +439,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
               </TouchableOpacity>
             </View>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </Screen>
   )

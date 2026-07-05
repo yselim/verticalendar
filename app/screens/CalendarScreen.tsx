@@ -112,6 +112,11 @@ export const CalendarScreen: FC = function CalendarScreen() {
     navigation.navigate("AllCalendarItems")
   }
 
+  const handleGoToSettings = () => {
+    setMenuOpen(false)
+    navigation.navigate("Settings")
+  }
+
   const handleGoToToday = () => {
     setMenuOpen(false)
     scrollToDate(today)
@@ -218,6 +223,10 @@ export const CalendarScreen: FC = function CalendarScreen() {
 
       {menuOpen && (
         <View style={$menuContainer}>
+          <TouchableOpacity style={$menuButton} onPress={handleGoToSettings} activeOpacity={0.8}>
+            <Ionicons name="build-outline" size={18} color="#fff" />
+            <Text text="Ayarlar" style={$menuButtonText} />
+          </TouchableOpacity>
           <TouchableOpacity style={$menuButton} onPress={handleGoToAllCalendarItems} activeOpacity={0.8}>
             <Ionicons name="list-outline" size={18} color="#fff" />
             <Text text="Tüm Hatırlatmalar" style={$menuButtonText} />

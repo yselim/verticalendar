@@ -10,3 +10,12 @@ export interface INote {
 export interface INotesCollection{
     [date: string]: INote[]
 }
+
+export interface ITabNote {
+  id: number
+  tab_id: number
+  content: string
+  order_index: number
+  created_at: string
+  updated_at: string
+}

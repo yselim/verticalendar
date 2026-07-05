@@ -75,3 +75,19 @@ Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite)
 💬 Join us on [Slack](https://join.slack.com/t/infiniteredcommunity/shared_invite/zt-1f137np4h-zPTq_CbaRFUOR_glUFs2UA) to discuss.
 
 📰 Make our Editor-in-chief happy by [reading the React Native Newsletter](https://reactnativenewsletter.com/).
+
+--- LISTS SCREEN ---
+- This screen should have 2 tabs too. Add a tab selector. Tab titles should be just "1" and "2" and each should take %50 width of the covering wrapper.
+- Show a floating action button : "+" at the bottom right (It should be visible from each tab.)
+- When pressed show a full screen list editor. show cancel and save buttons at  the top. when user press save, save the list to database (Also save the tab id so that we can fetch tab lists from that id)
+- Lists must have a title and list items. 
+- When a list is saved close the list editing screen
+- User can add list items, delete list items with slide similar to DayScreen
+
+
+
+---- DİĞER YAPILACAKLAR ---
+- Tüm geçmiş item'lar ve tüm gelecek item'lar tek listede görülebilmeli
+- Renkleri düzelt
+- alarm sesi seçilebilmeli
+- keyboard otomatik açıldığında altta boşluk kalıyor.

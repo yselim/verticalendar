@@ -100,14 +100,14 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
           />
           <View style={$buttonContainer}>
             <Button
-              text="Cancel"
+              text="İptal"
               onPress={handleCancel}
               style={$cancelButton}
               preset="default"
               LeftAccessory={(props) => <Icon icon="x" size={18} style={{ marginRight: 8 }} />}
             />
             <Button
-              text="Save"
+              text="Kaydet"
               onPress={handleSave}
               style={$saveButton}
               LeftAccessory={(props) => <Icon icon="check" size={18} style={{ marginRight: 8 }} />}

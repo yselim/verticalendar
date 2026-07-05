@@ -13,12 +13,33 @@ export const initDatabase = () => {
       notification_id TEXT
     );
   `)
+
+  db.execSync(`
+    CREATE TABLE IF NOT EXISTS tab_notes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tab_id INTEGER NOT NULL,
+      content TEXT NOT NULL,
+      order_index INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+
   // Migration: add notification_id column if it doesn't exist yet
   try {
     db.execSync(`ALTER TABLE items ADD COLUMN notification_id TEXT;`)
   } catch {
     // Column already exists — ignore
   }
+
+  try {
+    db.execSync(`ALTER TABLE tab_notes ADD COLUMN order_index INTEGER NOT NULL DEFAULT 0;`)
+  } catch {
+    // Column already exists — ignore
+  }
+
+  // Backfill order indexes for older rows so drag-drop has stable persisted ordering.
+  db.execSync(`UPDATE tab_notes SET order_index = id WHERE order_index = 0;`)
 }
 
 export const addItemToDB = (
@@ -77,6 +98,63 @@ export const updateItem = (
 
 export const updateNoteDate = (id: number, newDate: string) => {
   db.runSync("UPDATE items SET note_date = ? WHERE id = ?", [newDate, id])
+}
+
+export const addTabNoteToDB = (tabId: number, content: string, orderIndex?: number) => {
+  const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM tab_notes WHERE tab_id = ?", [
+    tabId,
+  ]) as { max_order?: number | null } | null
+  const nextOrderIndex =
+    orderIndex !== undefined ? orderIndex : (maxRow?.max_order ?? -1) + 1
+
+  const result = db.runSync(
+    "INSERT INTO tab_notes (tab_id, content, order_index) VALUES (?, ?, ?)",
+    [tabId, content, nextOrderIndex],
+  )
+  return result.lastInsertRowId
+}
+
+export const updateTabNoteInDB = (id: number, content: string) => {
+  db.runSync("UPDATE tab_notes SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?", [
+    content,
+    id,
+  ])
+}
+
+export const getTabNotesByTabId = (tabId: number) => {
+  return db.getAllSync(
+    "SELECT id, tab_id, content, order_index, created_at, updated_at FROM tab_notes WHERE tab_id = ? ORDER BY order_index ASC, id ASC",
+    [tabId],
+  )
+}
+
+export const getTabNoteById = (id: number) => {
+  return db.getFirstSync(
+    "SELECT id, tab_id, content, order_index, created_at, updated_at FROM tab_notes WHERE id = ?",
+    [id],
+  )
+}
+
+export const deleteTabNoteFromDB = (id: number) => {
+  db.runSync("DELETE FROM tab_notes WHERE id = ?", [id])
+}
+
+export const reorderTabNotesInDB = (tabId: number, notes: { id: number }[]) => {
+  notes.forEach((note, index) => {
+    db.runSync("UPDATE tab_notes SET order_index = ? WHERE id = ? AND tab_id = ?", [index, note.id, tabId])
+  })
+}
+
+export const moveTabNoteToTabInDB = (id: number, targetTabId: number) => {
+  const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM tab_notes WHERE tab_id = ?", [
+    targetTabId,
+  ]) as { max_order?: number | null } | null
+  const nextOrderIndex = (maxRow?.max_order ?? -1) + 1
+
+  db.runSync(
+    "UPDATE tab_notes SET tab_id = ?, order_index = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+    [targetTabId, nextOrderIndex, id],
+  )
 }
 
 export default db

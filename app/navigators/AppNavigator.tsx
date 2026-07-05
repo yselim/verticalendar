@@ -16,6 +16,7 @@ import { CalendarScreen } from "@/screens/CalendarScreen"
 import { DayScreen } from "@/screens/DayScreen"
 import { ToDoScreen } from "@/screens/ToDoScreen"
 import { NotesScreen } from "@/screens/NotesScreen"
+import { NoteEditorScreen } from "../screens/NoteEditorScreen"
 import { initDatabase } from "@/utils/database"
 import { useAppTheme } from "@/theme/context"
 import { Icon } from "@/components/Icon"
@@ -114,6 +115,7 @@ const AppStack = () => {
     >
       <Stack.Screen name="MainTabs" component={MainTabs} />
       <Stack.Screen name="Day" component={DayScreen} />
+      <Stack.Screen name="NoteEditor" component={NoteEditorScreen} />
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>

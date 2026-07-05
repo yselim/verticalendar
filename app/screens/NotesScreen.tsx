@@ -10,6 +10,7 @@ import { useAppTheme } from "@/theme/context"
 import { MainTabScreenProps } from "@/navigators/navigationTypes"
 import Ionicons from "@react-native-vector-icons/ionicons"
 import {
+  copyTabNoteInDB,
   deleteTabNoteFromDB,
   getTabNotesByTabId,
   moveTabNoteToTabInDB,
@@ -80,6 +81,15 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
       setMenuNoteId(null)
     },
     [activeTab],
+  )
+
+  const handleCopyNote = useCallback(
+    (noteId: number) => {
+      copyTabNoteInDB(noteId)
+      loadTabNotes(activeTab)
+      setMenuNoteId(null)
+    },
+    [activeTab, loadTabNotes],
   )
 
   const handleReorder = useCallback(
@@ -200,6 +210,16 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
               activeOpacity={0.8}
             >
               <Text text="Yan Sekmeye Taşı" style={$modalButtonText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[$modalButton, { backgroundColor: notesPalette.menuButton }]}
+              onPress={() => {
+                if (menuNoteId !== null) handleCopyNote(menuNoteId)
+              }}
+              activeOpacity={0.8}
+            >
+              <Text text="Kopyasını Oluştur" style={$modalButtonText} />
             </TouchableOpacity>
           </View>
         </Pressable>

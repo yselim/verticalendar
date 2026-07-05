@@ -194,6 +194,27 @@ export const moveTabNoteToTabInDB = (id: number, targetTabId: number) => {
   )
 }
 
+export const copyTabNoteInDB = (id: number) => {
+  const source = db.getFirstSync("SELECT tab_id, content FROM tab_notes WHERE id = ?", [
+    id,
+  ]) as { tab_id?: number; content?: string } | null
+
+  if (!source?.tab_id || source.content === undefined) return null
+
+  const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM tab_notes WHERE tab_id = ?", [
+    source.tab_id,
+  ]) as { max_order?: number | null } | null
+
+  const nextOrderIndex = (maxRow?.max_order ?? -1) + 1
+
+  const result = db.runSync(
+    "INSERT INTO tab_notes (tab_id, content, order_index) VALUES (?, ?, ?)",
+    [source.tab_id, source.content, nextOrderIndex],
+  )
+
+  return result.lastInsertRowId
+}
+
 export const addToDoListToDB = (tabId: number, title: string, orderIndex?: number) => {
   const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM todo_lists WHERE tab_id = ?", [
     tabId,
@@ -268,6 +289,41 @@ export const moveToDoListToTabInDB = (id: number, targetTabId: number) => {
 export const deleteToDoListFromDB = (id: number) => {
   db.runSync("DELETE FROM todo_items WHERE list_id = ?", [id])
   db.runSync("DELETE FROM todo_lists WHERE id = ?", [id])
+}
+
+export const copyToDoListInDB = (id: number) => {
+  const sourceList = db.getFirstSync("SELECT tab_id, title FROM todo_lists WHERE id = ?", [
+    id,
+  ]) as { tab_id?: number; title?: string } | null
+
+  if (!sourceList?.tab_id) return null
+
+  const maxRow = db.getFirstSync("SELECT MAX(order_index) as max_order FROM todo_lists WHERE tab_id = ?", [
+    sourceList.tab_id,
+  ]) as { max_order?: number | null } | null
+  const nextOrderIndex = (maxRow?.max_order ?? -1) + 1
+
+  const copyTitle = `${sourceList.title ?? "Yeni Liste"} (Kopya)`
+  const created = db.runSync(
+    "INSERT INTO todo_lists (tab_id, title, order_index) VALUES (?, ?, ?)",
+    [sourceList.tab_id, copyTitle, nextOrderIndex],
+  )
+
+  const newListId = created.lastInsertRowId as number
+
+  const sourceItems = db.getAllSync(
+    "SELECT content, completed, order_index FROM todo_items WHERE list_id = ? ORDER BY order_index ASC, id ASC",
+    [id],
+  ) as { content: string; completed: number; order_index: number }[]
+
+  sourceItems.forEach((item, index) => {
+    db.runSync(
+      "INSERT INTO todo_items (list_id, content, completed, order_index) VALUES (?, ?, ?, ?)",
+      [newListId, item.content, item.completed, index],
+    )
+  })
+
+  return newListId
 }
 
 export const getToDoItemsByListId = (listId: number) => {

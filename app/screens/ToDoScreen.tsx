@@ -9,6 +9,7 @@ import { Icon } from "@/components/Icon"
 import { useAppTheme } from "@/theme/context"
 import { MainTabScreenProps } from "@/navigators/navigationTypes"
 import {
+  copyToDoListInDB,
   deleteToDoListFromDB,
   getToDoListsByTabId,
   moveToDoListToTabInDB,
@@ -78,6 +79,15 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
       setMenuListId(null)
     },
     [activeTab],
+  )
+
+  const handleCopyList = useCallback(
+    (listId: number) => {
+      copyToDoListInDB(listId)
+      loadLists(activeTab)
+      setMenuListId(null)
+    },
+    [activeTab, loadLists],
   )
 
   const handleReorder = useCallback(
@@ -203,6 +213,16 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
               activeOpacity={0.8}
             >
               <Text text="Yan Sekmeye Taşı" style={$modalButtonText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[$modalButton, { backgroundColor: toDoPalette.menuButton }]}
+              onPress={() => {
+                if (menuListId !== null) handleCopyList(menuListId)
+              }}
+              activeOpacity={0.8}
+            >
+              <Text text="Kopyasını Oluştur" style={$modalButtonText} />
             </TouchableOpacity>
           </View>
         </Pressable>

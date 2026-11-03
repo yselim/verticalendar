@@ -1,15 +1,15 @@
-import { FC, useEffect } from "react"
+import { memo, useEffect } from "react"
 import { Pressable, View, ViewStyle, TextStyle } from "react-native"
-import { isWeekend } from "date-fns"
 import { useNavigation } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 
 import { Text } from "@/components/Text"
-import { useAppTheme } from "@/theme/context"
-import type { ThemedStyle } from "@/theme/types"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { useNotesStore } from "@/stores/notesStore"
 import { MONTH_NAMES, DAY_NAMES } from "@/utils/constants"
+import type { INote } from "types/types"
+
+const NO_NOTES: INote[] = []
 
 interface DayRowProps {
   day: Date
@@ -17,22 +17,24 @@ interface DayRowProps {
   isHighlighted?: boolean
 }
 
-export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday, isHighlighted }) {
-  const { themed } = useAppTheme()
-  const isWeekendDay = isWeekend(day)
+export const DayRow = memo(function DayRow({ day, isToday, isHighlighted }: DayRowProps) {
+  const isWeekendDay = day.getDay() === 0 || day.getDay() === 6
   const navigation = useNavigation<NativeStackNavigationProp<AppStackParamList>>()
-  const { notes, fetchNotes } = useNotesStore()
 
   // Use local date to avoid timezone issues
   const year = day.getFullYear()
   const month = String(day.getMonth() + 1).padStart(2, '0')
   const dayOfMonthStr = String(day.getDate()).padStart(2, '0')
   const dateKey = `${year}-${month}-${dayOfMonthStr}`
-  const dayNotes = notes[dateKey] || []
+
+  // Subscribe to this day's notes only: selecting the whole store would re-render every
+  // visible row whenever any day changes (e.g. each row's own fetch on mount).
+  const dayNotes = useNotesStore((state) => state.notes[dateKey]) ?? NO_NOTES
+  const fetchNotes = useNotesStore((state) => state.fetchNotes)
 
   useEffect(() => {
     fetchNotes(day)
-  }, [day])
+  }, [day, fetchNotes])
 
   const dayOfMonth = day.getDate()
   const monthName = MONTH_NAMES[day.getMonth()]
@@ -102,7 +104,7 @@ export const DayRow: FC<DayRowProps> = function DayRow({ day, isToday, isHighlig
       </View>
     </Pressable>
   )
-}
+})
 
 const $column1: ViewStyle = {
   alignItems: "center",
@@ -145,11 +147,6 @@ const $timeText: TextStyle = {
   fontSize: 10,
   fontWeight: "600",
   color: "#333",
-}
-
-const $noteDot: TextStyle = {
-  fontSize: 12,
-  color: "#666",
 }
 
 const $dayNumber: TextStyle = {

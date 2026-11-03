@@ -33,7 +33,7 @@ export const AllCalendarItemsScreen: FC<AllCalendarItemsScreenProps> = function 
   const [modalVisible, setModalVisible] = useState(false)
   const [editingNote, setEditingNote] = useState<INote | null>(null)
 
-  const { deleteNote } = useNotesStore()
+  const deleteNote = useNotesStore((state) => state.deleteNote)
 
   const loadItems = useCallback(() => {
     const pastRows = getPastCalendarItemsFromNow() as any[]
@@ -74,7 +74,7 @@ export const AllCalendarItemsScreen: FC<AllCalendarItemsScreenProps> = function 
   }, [loadItems])
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <Text text="Tüm Hatırlatmalar" preset="heading" style={$title} />
 
       <View style={$tabsRow}>

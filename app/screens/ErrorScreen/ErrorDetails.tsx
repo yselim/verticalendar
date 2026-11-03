@@ -1,12 +1,9 @@
 import { ErrorInfo } from "react"
-import { ScrollView, TextStyle, View, ViewStyle } from "react-native"
+import { ScrollView, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 
-import { Button } from "@/components/Button"
-import { Icon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { useAppTheme } from "@/theme/context"
-import type { ThemedStyle } from "@/theme/types"
+import { colors } from "@/theme/colors"
 
 export interface ErrorDetailsProps {
   error: Error
@@ -15,84 +12,76 @@ export interface ErrorDetailsProps {
 }
 
 /**
- * Renders the error details screen.
- * @param {ErrorDetailsProps} props - The props for the `ErrorDetails` component.
- * @returns {JSX.Element} The rendered `ErrorDetails` component.
+ * Shown by ErrorBoundary when a render error is caught.
  */
 export function ErrorDetails(props: ErrorDetailsProps) {
-  const { themed } = useAppTheme()
   return (
-    <Screen
-      preset="fixed"
-      safeAreaEdges={["top", "bottom"]}
-      contentContainerStyle={themed($contentContainer)}
-    >
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$contentContainer}>
       <View style={$topSection}>
-        <Icon icon="ladybug" size={64} />
-        <Text style={themed($heading)} preset="subheading" tx="errorScreen:title" />
-        <Text tx="errorScreen:friendlySubtitle" />
+        <Text style={$heading} preset="subheading" text="Bir hata oluştu" />
+        <Text text="Uygulamayı sıfırlayıp tekrar deneyebilirsin." />
       </View>
 
-      <ScrollView
-        style={themed($errorSection)}
-        contentContainerStyle={themed($errorSectionContentContainer)}
-      >
-        <Text style={themed($errorContent)} weight="bold" text={`${props.error}`.trim()} />
+      <ScrollView style={$errorSection} contentContainerStyle={$errorSectionContentContainer}>
+        <Text style={$errorContent} weight="bold" text={`${props.error}`.trim()} />
         <Text
           selectable
-          style={themed($errorBacktrace)}
+          style={$errorBacktrace}
           text={`${props.errorInfo?.componentStack ?? ""}`.trim()}
         />
       </ScrollView>
 
-      <Button
-        preset="reversed"
-        style={themed($resetButton)}
-        onPress={props.onReset}
-        tx="errorScreen:reset"
-      />
+      <TouchableOpacity style={$resetButton} onPress={props.onReset} activeOpacity={0.85}>
+        <Text text="Sıfırla" weight="medium" style={$resetText} />
+      </TouchableOpacity>
     </Screen>
   )
 }
 
-const $contentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $contentContainer: ViewStyle = {
   alignItems: "center",
-  paddingHorizontal: spacing.lg,
-  paddingTop: spacing.xl,
-  flex: 1,
-})
-
-const $topSection: ViewStyle = {
-  flex: 1,
-  alignItems: "center",
+  paddingHorizontal: 24,
+  paddingTop: 32,
+  paddingBottom: 16,
 }
 
-const $heading: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.error,
-  marginBottom: spacing.md,
-})
+const $topSection: ViewStyle = {
+  alignItems: "center",
+  gap: 8,
+}
 
-const $errorSection: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
-  flex: 2,
+const $heading: TextStyle = {
+  color: colors.error,
+}
+
+const $errorSection: ViewStyle = {
+  flex: 1,
+  alignSelf: "stretch",
   backgroundColor: colors.separator,
-  marginVertical: spacing.md,
+  marginVertical: 16,
   borderRadius: 6,
-})
+}
 
-const $errorSectionContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  padding: spacing.md,
-})
+const $errorSectionContentContainer: ViewStyle = {
+  padding: 16,
+}
 
-const $errorContent: ThemedStyle<TextStyle> = ({ colors }) => ({
+const $errorContent: TextStyle = {
   color: colors.error,
-})
+}
 
-const $errorBacktrace: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  marginTop: spacing.md,
+const $errorBacktrace: TextStyle = {
+  marginTop: 16,
   color: colors.textDim,
-})
+}
 
-const $resetButton: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+const $resetButton: ViewStyle = {
   backgroundColor: colors.error,
-  paddingHorizontal: spacing.xxl,
-})
+  paddingHorizontal: 48,
+  paddingVertical: 14,
+  borderRadius: 8,
+}
+
+const $resetText: TextStyle = {
+  color: colors.palette.neutral100,
+}

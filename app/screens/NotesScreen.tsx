@@ -6,7 +6,6 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { Icon } from "@/components/Icon"
-import { useAppTheme } from "@/theme/context"
 import { MainTabScreenProps } from "@/navigators/navigationTypes"
 import Ionicons from "@react-native-vector-icons/ionicons"
 import {
@@ -42,8 +41,6 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
   const [notes, setNotes] = useState<ITabNote[]>([])
   const [menuNoteId, setMenuNoteId] = useState<number | null>(null)
   const [confirmDeleteNoteId, setConfirmDeleteNoteId] = useState<number | null>(null)
-
-  useAppTheme()
 
   const loadTabNotes = useCallback((tabId: number) => {
     const rows = getTabNotesByTabId(tabId) as ITabNote[]
@@ -133,7 +130,6 @@ export const NotesScreen: FC<NotesScreenProps> = function NotesScreen({ navigati
 
   return (
     <Screen
-      preset="fixed"
       safeAreaEdges={["top"]}
       backgroundColor={notesPalette.background}
       contentContainerStyle={$container}

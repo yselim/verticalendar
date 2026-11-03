@@ -1,4 +1,4 @@
-import { FC, useState } from "react"
+import { memo, useState } from "react"
 import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Modal, Platform } from "react-native"
 import { GestureDetector, Gesture } from "react-native-gesture-handler"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated"
@@ -20,7 +20,7 @@ interface NoteProps {
   onNoteChanged?: () => void
 }
 
-export const Note: FC<NoteProps> = function Note({
+export const Note = memo(function Note({
   note,
   onDelete,
   onEdit,
@@ -28,7 +28,7 @@ export const Note: FC<NoteProps> = function Note({
   disabled,
   settingsMode = "default",
   onNoteChanged,
-}) {
+}: NoteProps) {
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
   const [showSettingsModal, setShowSettingsModal] = useState(false)
@@ -39,7 +39,9 @@ export const Note: FC<NoteProps> = function Note({
     defaultTime.setHours(10, 0, 0, 0)
     return defaultTime
   })
-  const { moveNoteToDate, updateNote } = useNotesStore()
+  // Select only the actions: subscribing to the whole store would re-render every row on any change
+  const moveNoteToDate = useNotesStore((state) => state.moveNoteToDate)
+  const updateNote = useNotesStore((state) => state.updateNote)
   const SWIPE_DELETE_THRESHOLD = -60
   const SWIPE_MAX = -180
   const today = new Date()
@@ -160,17 +162,17 @@ export const Note: FC<NoteProps> = function Note({
 
   const handleDelete = () => {
     // Animate out before deleting
-    const direction = translateX.value > 0 ? 1 : -1;
-    translateX.value = withTiming(direction * 500, { duration: 300 })
-    opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+    const direction = translateX.get() > 0 ? 1 : -1;
+    translateX.set(withTiming(direction * 500, { duration: 300 }))
+    opacity.set(withTiming(0, { duration: 300 }, (finished) => {
       if (finished && onDelete) {
         runOnJS(onDelete)(note.id)
       }
-    })
+    }))
   }
 
   const resetPosition = () => {
-    translateX.value = withSpring(0, { stiffness: 100, damping: 15 })
+    translateX.set(withSpring(0, { stiffness: 100, damping: 15 }))
   }
 
   const panGesture = Gesture.Pan()
@@ -178,11 +180,11 @@ export const Note: FC<NoteProps> = function Note({
     .failOffsetY([-10, 10])
     .onUpdate((event) => {
       if (event.translationX > Math.abs(SWIPE_MAX)) {
-        translateX.value = Math.abs(SWIPE_MAX)
+        translateX.set(Math.abs(SWIPE_MAX))
       } else if (event.translationX < SWIPE_MAX) {
-        translateX.value = SWIPE_MAX
+        translateX.set(SWIPE_MAX)
       } else {
-        translateX.value = event.translationX
+        translateX.set(event.translationX)
       }
     })
     .onEnd((event) => {
@@ -195,8 +197,8 @@ export const Note: FC<NoteProps> = function Note({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: translateX.value }],
-      opacity: opacity.value,
+      transform: [{ translateX: translateX.get() }],
+      opacity: opacity.get(),
     }
   })
 
@@ -244,36 +246,38 @@ export const Note: FC<NoteProps> = function Note({
       </View>
     </TouchableOpacity>
 
-      <Modal
-        visible={showSettingsModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <Pressable style={$modalOverlay} onPress={() => setShowSettingsModal(false)}>
-          <View style={$modalContent}>
-            <TouchableOpacity
-              style={[$modalButton, isOnToday && $modalButtonDisabled]}
-              onPress={handleSendToToday}
-              activeOpacity={0.8}
-              disabled={isOnToday}
-            >
-              <Text text="Bugüne Gönder" style={[$modalButtonText, isOnToday && $modalButtonTextDisabled]} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[$modalButton, isOnTomorrow && $modalButtonDisabled]}
-              onPress={handleSendToTomorrow}
-              activeOpacity={0.8}
-              disabled={isOnTomorrow}
-            >
-              <Text text="Yarına Gönder" style={[$modalButtonText, isOnTomorrow && $modalButtonTextDisabled]} />
-            </TouchableOpacity>
-            <TouchableOpacity style={$modalButton} onPress={handleOpenDatePicker} activeOpacity={0.8}>
-              <Text text="Bir tarihe gönder" style={$modalButtonText} />
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Modal>
+      {showSettingsModal && (
+        <Modal
+          visible
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowSettingsModal(false)}
+        >
+          <Pressable style={$modalOverlay} onPress={() => setShowSettingsModal(false)}>
+            <View style={$modalContent}>
+              <TouchableOpacity
+                style={[$modalButton, isOnToday && $modalButtonDisabled]}
+                onPress={handleSendToToday}
+                activeOpacity={0.8}
+                disabled={isOnToday}
+              >
+                <Text text="Bugüne Gönder" style={[$modalButtonText, isOnToday && $modalButtonTextDisabled]} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[$modalButton, isOnTomorrow && $modalButtonDisabled]}
+                onPress={handleSendToTomorrow}
+                activeOpacity={0.8}
+                disabled={isOnTomorrow}
+              >
+                <Text text="Yarına Gönder" style={[$modalButtonText, isOnTomorrow && $modalButtonTextDisabled]} />
+              </TouchableOpacity>
+              <TouchableOpacity style={$modalButton} onPress={handleOpenDatePicker} activeOpacity={0.8}>
+                <Text text="Bir tarihe gönder" style={$modalButtonText} />
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
 
       {Platform.OS === "ios" && showDatePickerModal && (
         <DateTimePicker
@@ -285,9 +289,9 @@ export const Note: FC<NoteProps> = function Note({
         />
       )}
 
-      {Platform.OS === "ios" && (
+      {Platform.OS === "ios" && showTimePicker && (
         <Modal
-          visible={showTimePicker}
+          visible
           transparent={true}
           animationType="fade"
           onRequestClose={() => setShowTimePicker(false)}
@@ -323,7 +327,7 @@ export const Note: FC<NoteProps> = function Note({
       </Animated.View>
     </GestureDetector>
   )
-}
+})
 
 const $noteContainer: ViewStyle = {
   padding: 4,
@@ -393,10 +397,6 @@ const $alarmOffButton: ViewStyle = {
 const $settingsButton: ViewStyle = {
   padding: 4,
   marginLeft: 4,
-}
-
-const $calendarIcon: TextStyle = {
-  fontSize: 18,
 }
 
 const $modalOverlay: ViewStyle = {
@@ -481,15 +481,3 @@ const $modalButtonTextDisabled: TextStyle = {
   color: colors.palette.neutral600,
 }
 
-const $deleteButton: ViewStyle = {
-  marginLeft: 12,
-  padding: 4,
-  justifyContent: "center",
-  alignItems: "center",
-}
-
-const $deleteText: TextStyle = {
-  fontSize: 20,
-  color: colors.palette.angry500,
-  fontWeight: "600",
-}

@@ -4,16 +4,13 @@
   "scheme": "verticalendar",
   "version": "1.0.0",
   "orientation": "portrait",
-  "userInterfaceStyle": "automatic",
+  "userInterfaceStyle": "light",
   "icon": "./assets/images/app-icon-all.png",
   "updates": {
     "url": "https://u.expo.dev/ce39307f-f4ba-4e88-9b66-ed4bed2fcd64",
     "fallbackToCacheTimeout": 0,
     "checkAutomatically": "ON_LOAD"
   },
-  "assetBundlePatterns": [
-    "**/*"
-  ],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.verticalendar",
@@ -21,7 +18,7 @@
       "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
-    "allowBackup": false,
+    "allowBackup": false
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
@@ -41,15 +38,22 @@
       "ITSAppUsesNonExemptEncryption": false
     }
   },
-  "web": {
-    "favicon": "./assets/images/app-icon-web-favicon.png",
-    "bundler": "metro"
-  },
   "plugins": [
-    "expo-localization",
-    "expo-font",
     "@react-native-community/datetimepicker",
     "expo-sqlite",
+    "expo-audio",
+    "expo-sharing",
+    "expo-updates",
+    [
+      "expo-font",
+      {
+        "fonts": [
+          "./assets/fonts/Nunito-Regular.ttf",
+          "./assets/fonts/Nunito-Medium.ttf",
+          "./assets/fonts/Nunito-Bold.ttf"
+        ]
+      }
+    ],
     [
       "expo-notifications",
       {
@@ -72,23 +76,24 @@
       }
     ],
     [
-      "react-native-edge-to-edge",
+      "expo-build-properties",
       {
         "android": {
-          "parentTheme": "Light",
-          "enforceNavigationBarContrast": false
+          "enableMinifyInReleaseBuilds": true,
+          "enableShrinkResourcesInReleaseBuilds": true,
+          "buildArchs": [
+            "arm64-v8a"
+          ]
         }
       }
     ],
-    "expo-build-properties"
+    "./plugins/withAndroidSystemBars"
   ],
   "experiments": {
-    "tsconfigPaths": true
+    "tsconfigPaths": true,
+    "reactCompiler": true
   },
   "extra": {
-    "ignite": {
-      "version": "11.4.0"
-    },
     "eas": {
       "projectId": "ce39307f-f4ba-4e88-9b66-ed4bed2fcd64"
     }

@@ -36,7 +36,7 @@ export const SettingsScreen: FC = function SettingsScreen() {
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <View style={$content}>
         <Text text="Ayarlar" preset="heading" style={$title} />
 

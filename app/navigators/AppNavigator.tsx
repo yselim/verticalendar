@@ -1,48 +1,28 @@
-/**
- * The app navigator (formerly "AppNavigator" and "MainNavigator") is used for the primary
- * navigation flows of your app.
- * Generally speaking, it will contain an auth flow (registration, login, forgot password)
- * and a "main" flow which the user will use once logged in.
- */
-import { NavigationContainer, useNavigation } from "@react-navigation/native"
-import { createNativeStackNavigator } from "@react-navigation/native-stack"
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { useEffect, useRef } from "react"
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
+import { DefaultTheme, NavigationContainer, useNavigation } from "@react-navigation/native"
+import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import Ionicons from "@react-native-vector-icons/ionicons"
 import * as Notifications from "expo-notifications"
 
-import Config from "@/config"
-import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
+import { Icon } from "@/components/Icon"
+import { AddEditToDoListScreen } from "@/screens/AddEditToDoListScreen"
+import { AllCalendarItemsScreen } from "@/screens/AllCalendarItemsScreen"
 import { CalendarScreen } from "@/screens/CalendarScreen"
 import { DayScreen } from "@/screens/DayScreen"
-import { ToDoScreen } from "@/screens/ToDoScreen"
+import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
+import { NoteEditorScreen } from "@/screens/NoteEditorScreen"
 import { NotesScreen } from "@/screens/NotesScreen"
-import { AllCalendarItemsScreen } from "@/screens/AllCalendarItemsScreen"
-import { NoteEditorScreen } from "../screens/NoteEditorScreen"
-import { AddEditToDoListScreen } from "../screens/AddEditToDoListScreen"
-import { SettingsScreen } from "../screens/SettingsScreen"
-import { initDatabase } from "@/utils/database"
-import { useAppTheme } from "@/theme/context"
-import { Icon } from "@/components/Icon"
-import Ionicons from "@react-native-vector-icons/ionicons"
+import { SettingsScreen } from "@/screens/SettingsScreen"
+import { ToDoScreen } from "@/screens/ToDoScreen"
+import { colors } from "@/theme/colors"
 
-import type { AppStackParamList, MainTabParamList, NavigationProps } from "./navigationTypes"
-import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
+import type { AppStackParamList, MainTabParamList } from "./navigationTypes"
 
-/**
- * This is a list of all the route names that will exit the app if the back button
- * is pressed while in that screen. Only affects Android.
- */
-const exitRoutes = Config.exitRoutes
-
-// Documentation: https://reactnavigation.org/docs/stack-navigator/
 const Stack = createNativeStackNavigator<AppStackParamList>()
 const Tab = createBottomTabNavigator<MainTabParamList>()
 
 const MainTabs = () => {
-  const {
-    theme: { colors },
-  } = useAppTheme()
-
   return (
     <Tab.Navigator
       screenOptions={{
@@ -73,7 +53,9 @@ const MainTabs = () => {
         name="Notlar"
         component={NotesScreen}
         options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="document-text-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text-outline" color={color} size={size} />
+          ),
         }}
       />
     </Tab.Navigator>
@@ -81,14 +63,11 @@ const MainTabs = () => {
 }
 
 const AppStack = () => {
-  const {
-    theme: { colors },
-  } = useAppTheme()
-
   const navigation = useNavigation<any>()
   const lastNotificationResponse = Notifications.useLastNotificationResponse()
   const processedNotificationId = useRef<string | null>(null)
 
+  // Tapping a reminder notification opens that note's day
   useEffect(() => {
     if (
       lastNotificationResponse &&
@@ -110,7 +89,6 @@ const AppStack = () => {
       initialRouteName="MainTabs"
       screenOptions={{
         headerShown: false,
-        navigationBarColor: colors.background,
         contentStyle: {
           backgroundColor: colors.background,
         },
@@ -122,24 +100,14 @@ const AppStack = () => {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="NoteEditor" component={NoteEditorScreen} />
       <Stack.Screen name="AddEditToDoList" component={AddEditToDoListScreen} />
-      {/** 🔥 Your screens go here */}
-      {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )
 }
 
-export const AppNavigator = (props: NavigationProps) => {
-  const { navigationTheme } = useAppTheme()
-
-  useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
-
-  useEffect(() => {
-    initDatabase()
-  }, [])
-
+export const AppNavigator = () => {
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
-      <ErrorBoundary catchErrors={Config.catchErrors}>
+    <NavigationContainer theme={DefaultTheme}>
+      <ErrorBoundary>
         <AppStack />
       </ErrorBoundary>
     </NavigationContainer>

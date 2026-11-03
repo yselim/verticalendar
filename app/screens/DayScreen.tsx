@@ -1,4 +1,4 @@
-import { FC, useEffect, useState } from "react"
+import { FC, useCallback, useEffect, useState } from "react"
 import { ViewStyle, ScrollView, View, TextStyle, TouchableOpacity } from "react-native"
 import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 
@@ -10,21 +10,25 @@ import { useNotesStore } from "@/stores/notesStore"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { MONTH_NAMES_FULL, DAY_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
-import Feather from "@react-native-vector-icons/feather"
+import Ionicons from "@react-native-vector-icons/ionicons"
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from "react-native-draggable-flatlist"
 
 type DayScreenProps = NativeStackScreenProps<AppStackParamList, "Day">
 
+const NO_NOTES: INote[] = []
+
 export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigation }) {
   const { date } = route.params
-  const { notes, fetchNotes, deleteNote, reorderNotes } = useNotesStore()
+  const fetchNotes = useNotesStore((state) => state.fetchNotes)
+  const deleteNote = useNotesStore((state) => state.deleteNote)
+  const reorderNotes = useNotesStore((state) => state.reorderNotes)
   const [modalVisible, setModalVisible] = useState(false)
   const [editingNote, setEditingNote] = useState<INote | null>(null)
 
   const currentDate = new Date(date)
   // Use local date to avoid timezone issues
   const dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
-  const dayNotes = notes[dateKey] || []
+  const dayNotes = useNotesStore((state) => state.notes[dateKey]) ?? NO_NOTES
 
   useEffect(() => {
     fetchNotes(new Date(date))
@@ -40,36 +44,34 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
     setModalVisible(true)
   }
 
-  const handleEditNote = (note: INote) => {
+  // Stable callbacks so memoized <Note> rows don't re-render on every screen render
+  const handleEditNote = useCallback((note: INote) => {
     setEditingNote(note)
     setModalVisible(true)
-  }
+  }, [])
 
   const handleCloseModal = () => {
     setModalVisible(false)
     setEditingNote(null)
   }
 
-  const handleDeleteNote = (noteId: number) => {
-    deleteNote(noteId)
-  }
-
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<INote>) => {
-    return (
+  const renderItem = useCallback(
+    ({ item, drag, isActive }: RenderItemParams<INote>) => (
       <ScaleDecorator>
-        <Note 
-          note={item} 
-          onDelete={handleDeleteNote} 
-          onEdit={handleEditNote} 
+        <Note
+          note={item}
+          onDelete={deleteNote}
+          onEdit={handleEditNote}
           onLongPress={drag}
           disabled={isActive}
         />
       </ScaleDecorator>
-    )
-  }
+    ),
+    [deleteNote, handleEditNote],
+  )
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <View style={$titleContainer}>
         <Text text={`${dayNumber} ${monthName} ${year}`} preset="heading" style={$dateText} />
         <Text text={dayName} preset="heading" style={$dayNameText} />
@@ -83,7 +85,7 @@ export const DayScreen: FC<DayScreenProps> = function DayScreen({ route, navigat
         contentContainerStyle={{ paddingBottom: 100 }}
       />
       <TouchableOpacity style={$fab} onPress={handleAddPress} activeOpacity={0.8}>
-        <Feather name="plus" size={32} color="#fff" />
+        <Ionicons name="add" size={36} color="#fff" />
       </TouchableOpacity>
       <AddEditNoteModal 
         visible={modalVisible} 

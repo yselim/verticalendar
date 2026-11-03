@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { FC, memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Alert,
   Modal,
@@ -26,7 +26,7 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
-import { useAppTheme } from "@/theme/context"
+import { colors } from "@/theme/colors"
 import {
   addToDoListToDB,
   addToDoItemToDB,
@@ -54,31 +54,27 @@ interface ToDoItemRowProps {
 const SWIPE_DELETE_THRESHOLD = -60
 const SWIPE_MAX = -180
 
-const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
+const ToDoItemRow = memo(function ToDoItemRow({
   item,
   isActive,
   onLongPress,
   onPress,
   onDelete,
   onToggleComplete,
-}) {
-  const {
-    theme: { colors },
-  } = useAppTheme()
-
+}: ToDoItemRowProps) {
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
 
   const handleDelete = useCallback(() => {
-    const direction = translateX.value > 0 ? 1 : -1
-    translateX.value = withTiming(direction * 500, { duration: 240 })
-    opacity.value = withTiming(0, { duration: 220 }, (finished) => {
+    const direction = translateX.get() > 0 ? 1 : -1
+    translateX.set(withTiming(direction * 500, { duration: 240 }))
+    opacity.set(withTiming(0, { duration: 220 }, (finished) => {
       if (finished) runOnJS(onDelete)(item.id)
-    })
+    }))
   }, [item.id, onDelete, opacity, translateX])
 
   const resetPosition = useCallback(() => {
-    translateX.value = withSpring(0, { stiffness: 100, damping: 15 })
+    translateX.set(withSpring(0, { stiffness: 100, damping: 15 }))
   }, [translateX])
 
   const panGesture = useMemo(
@@ -89,11 +85,11 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
         .failOffsetY([-10, 10])
         .onUpdate((event) => {
           if (event.translationX > Math.abs(SWIPE_MAX)) {
-            translateX.value = Math.abs(SWIPE_MAX)
+            translateX.set(Math.abs(SWIPE_MAX))
           } else if (event.translationX < SWIPE_MAX) {
-            translateX.value = SWIPE_MAX
+            translateX.set(SWIPE_MAX)
           } else {
-            translateX.value = event.translationX
+            translateX.set(event.translationX)
           }
         })
         .onEnd((event) => {
@@ -111,8 +107,8 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateX: translateX.value }],
-      opacity: opacity.value,
+      transform: [{ translateX: translateX.get() }],
+      opacity: opacity.get(),
     }
   })
 
@@ -162,7 +158,7 @@ const ToDoItemRow: FC<ToDoItemRowProps> = function ToDoItemRow({
       </Animated.View>
     </GestureDetector>
   )
-}
+})
 
 export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function AddEditToDoListScreen({
   route,
@@ -185,9 +181,6 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   const { height: windowHeight } = useWindowDimensions()
   const $modalOverlayStyle = [$modalOverlay, { paddingBottom: windowHeight * DIALOG_KEYBOARD_RESERVE }]
 
-  const {
-    theme: { colors },
-  } = useAppTheme()
 
   useEffect(() => {
     if (showCreateListModal) {
@@ -325,7 +318,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <View style={$titleContainer}>
         {isEditingTitle ? (
           <TextInput

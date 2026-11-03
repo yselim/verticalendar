@@ -6,7 +6,6 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from "react-nativ
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { Icon } from "@/components/Icon"
-import { useAppTheme } from "@/theme/context"
 import { MainTabScreenProps } from "@/navigators/navigationTypes"
 import {
   copyToDoListInDB,
@@ -41,8 +40,6 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
   const [lists, setLists] = useState<IToDoList[]>([])
   const [menuListId, setMenuListId] = useState<number | null>(null)
   const [confirmDeleteListId, setConfirmDeleteListId] = useState<number | null>(null)
-
-  useAppTheme()
 
   const loadLists = useCallback((tabId: number) => {
     const rows = getToDoListsByTabId(tabId) as IToDoList[]
@@ -136,7 +133,6 @@ export const ToDoScreen: FC<ToDoScreenProps> = function ToDoScreen({ navigation 
 
   return (
     <Screen
-      preset="fixed"
       safeAreaEdges={["top"]}
       backgroundColor={toDoPalette.background}
       contentContainerStyle={$container}

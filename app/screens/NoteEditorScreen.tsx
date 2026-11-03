@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
-import { useAppTheme } from "@/theme/context"
+import { colors } from "@/theme/colors"
 import { addTabNoteToDB, getTabNoteById, updateTabNoteInDB } from "@/utils/database"
 
 type NoteEditorScreenProps = NativeStackScreenProps<AppStackParamList, "NoteEditor">
@@ -13,13 +13,9 @@ type NoteEditorScreenProps = NativeStackScreenProps<AppStackParamList, "NoteEdit
 export const NoteEditorScreen: FC<NoteEditorScreenProps> = function NoteEditorScreen({ route, navigation }) {
   const { tabId, noteId } = route.params
   const [content, setContent] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
   const isEditing = noteId !== undefined
   const inputRef = useRef<TextInput>(null)
 
-  const {
-    theme: { colors },
-  } = useAppTheme()
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 150)
@@ -42,21 +38,16 @@ export const NoteEditorScreen: FC<NoteEditorScreenProps> = function NoteEditorSc
       return
     }
 
-    setIsSaving(true)
-    try {
-      if (isEditing && noteId) {
-        updateTabNoteInDB(noteId, trimmed)
-      } else {
-        addTabNoteToDB(tabId, trimmed)
-      }
-      navigation.goBack()
-    } finally {
-      setIsSaving(false)
+    if (isEditing && noteId) {
+      updateTabNoteInDB(noteId, trimmed)
+    } else {
+      addTabNoteToDB(tabId, trimmed)
     }
+    navigation.goBack()
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerStyle={$container}>
       <TextInput
         ref={inputRef}
         style={[
@@ -85,9 +76,8 @@ export const NoteEditorScreen: FC<NoteEditorScreenProps> = function NoteEditorSc
 
         <TouchableOpacity
           onPress={handleSave}
-          disabled={isSaving}
           hitSlop={8}
-          style={[$actionButton, $saveButton, isSaving && $disabledButton]}
+          style={[$actionButton, $saveButton]}
         >
           <Text text="Kaydet" style={[$actionText, $saveButtonText]} />
         </TouchableOpacity>
@@ -121,10 +111,6 @@ const $actionButton: ViewStyle = {
 
 const $saveButton: ViewStyle = {
   backgroundColor: "#22C55E",
-}
-
-const $disabledButton: ViewStyle = {
-  opacity: 0.65,
 }
 
 const $actionText: TextStyle = {

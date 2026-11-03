@@ -179,9 +179,11 @@ export const useNotesStore = create<NotesStore>((set, get) => ({
     set((state) => {
       const updatedNotes = { ...state.notes }
 
-      // Find and remove the note from the collection
+      // Find and remove the note; only the affected day gets a new array, so other days don't re-render
       Object.keys(updatedNotes).forEach((dateKey) => {
-        updatedNotes[dateKey] = updatedNotes[dateKey].filter((note) => note.id !== noteId)
+        if (updatedNotes[dateKey].some((note) => note.id === noteId)) {
+          updatedNotes[dateKey] = updatedNotes[dateKey].filter((note) => note.id !== noteId)
+        }
       })
 
       return { notes: updatedNotes }

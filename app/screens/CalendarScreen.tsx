@@ -197,7 +197,7 @@ export const CalendarScreen: FC = function CalendarScreen() {
   )
 
   return (
-    <Screen preset="fixed" contentContainerStyle={$screenContainer}>
+    <Screen contentContainerStyle={$screenContainer}>
       <FlashList
         key={listKey}
         ref={flashListRef}

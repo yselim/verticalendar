@@ -12,7 +12,7 @@ import {
 
 import { Text } from "@/components/Text"
 import { useNotesStore } from "@/stores/notesStore"
-import { useAppTheme } from "@/theme/context"
+import { colors } from "@/theme/colors"
 import { DAY_NAMES_FULL, MONTH_NAMES_FULL } from "@/utils/constants"
 import { INote } from "types/types"
 
@@ -30,12 +30,10 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   note,
 }) {
   const [itemText, setItemText] = useState("")
-  const { addNote, updateNote } = useNotesStore()
+  const addNote = useNotesStore((state) => state.addNote)
+  const updateNote = useNotesStore((state) => state.updateNote)
   const inputRef = useRef<TextInput>(null)
   const { height: windowHeight } = useWindowDimensions()
-  const {
-    theme: { colors },
-  } = useAppTheme()
 
   const isEditing = note !== null && note !== undefined
 

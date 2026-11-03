@@ -1,6 +1,6 @@
 # VertiCalendar
 
-A personal, offline-first planner app built with **Expo / React Native**. Everything is stored locally in SQLite on the device: there is no backend and no login. The UI language is **Turkish**.
+A personal, offline-first planner app built with **Expo / React Native**. Everything is stored locally in SQLite on the device: there is no backend and no login. The UI language is **Turkish**, and the app is **light mode only**. It is built for personal use on one Android phone, not for store release.
 
 The app has three bottom tabs:
 
@@ -24,64 +24,82 @@ Other stack screens: `DayScreen` (the day's items), `AllCalendarItemsScreen` (pa
 
 | Concern | Library |
 | --- | --- |
-| Framework | Expo SDK **57** (`expo@~57.0.31`), React Native **0.86**, React 19.2, New Architecture, Hermes V1 |
+| Framework | Expo SDK **57**, React Native **0.86**, React 19.2, New Architecture, Hermes V1, **React Compiler** |
 | Navigation | `@react-navigation/native-stack` + `@react-navigation/bottom-tabs` (v7). **Not** Expo Router. |
-| Storage | `expo-sqlite` (sync API) for all user data; `react-native-mmkv` for small preferences |
+| Storage | `expo-sqlite` (sync API) for all user data. `expo-sqlite/kv-store` for the one small preference (reminder sound). |
 | State | `zustand` (`app/stores/notesStore.ts`) for day items only; the other screens read SQLite directly into local state |
-| Lists and gestures | `react-native-draggable-flatlist`, `react-native-gesture-handler`, `react-native-reanimated` 4 + `react-native-worklets` |
+| Lists and gestures | `@shopify/flash-list`, `react-native-draggable-flatlist`, `react-native-gesture-handler`, `react-native-reanimated` 4 + `react-native-worklets` |
 | Date and time pickers | `@react-native-community/datetimepicker` |
 | Notifications and sounds | `expo-notifications`, `expo-audio` |
 | Backup | `expo-file-system/legacy`, `expo-sharing`, `expo-document-picker` |
+| Icons and fonts | A few PNG icons (`assets/icons`), `@react-native-vector-icons/ionicons`, and Nunito (3 weights) embedded at build time |
 | OTA updates | `expo-updates` (EAS Update) |
-| Boilerplate | [Ignite](https://github.com/infinitered/ignite) v11. Leftover boilerplate (themes, i18n, `Screen`, `Text`, …) is still present. |
+
+The project started from the [Ignite](https://github.com/infinitered/ignite) boilerplate. Its unused parts have been removed: i18n, the dark/light theme system, Reactotron, the demo components, the API client and web support.
 
 ## Getting started
 
-Requirements: Node ≥ 20 and **pnpm 11** (the lockfile is pnpm). Use a **development build**, not Expo Go, because the app uses native modules such as MMKV and SQLite.
+Requirements: Node ≥ 20 and **pnpm 11** (the lockfile is pnpm). Use a **development build**, not Expo Go, because the app uses native modules.
 
 ```bash
 pnpm install
-pnpm run start            # Metro for the dev client
+pnpm run start              # Metro for the dev client
 
-# Build and run natively (regenerates ios/ and android/ when missing)
-pnpm run android
-pnpm run ios
-
-# EAS local builds
-pnpm run build:android:device
-pnpm run build:ios:sim
+pnpm run android            # build and run a debug build on a device or emulator
+pnpm run build:android:preview   # local EAS release build → .apk (use this for daily use)
+pnpm run android:aot        # after installing an APK: compile it fully ahead-of-time (faster startup)
 ```
 
-`ios/` and `android/` are **gitignored and generated** (Continuous Native Generation). After any change to native dependencies or `app.json` plugins, regenerate them:
+`ios/` and `android/` are **gitignored and generated** (Continuous Native Generation). After any change to native dependencies, `app.json` or `plugins/`, regenerate them:
 
 ```bash
-pnpm run prebuild:clean   # npx expo prebuild --clean
+pnpm run prebuild:clean     # npx expo prebuild --clean
 ```
+
+### EAS account
+
+EAS build scripts load `EXPO_TOKEN` from `.env.local` through `dotenv-cli`, so this project always builds under its own Expo account. Check which account is active with `pnpm run eas:whoami`.
 
 ### pnpm notes
 
 - Project-level pnpm settings live in **`pnpm-workspace.yaml`** (`nodeLinker: hoisted`, `allowBuilds`). pnpm 11 ignores pnpm settings in `.npmrc`.
-- To add or upgrade Expo-managed packages, use `npx expo install <pkg>` so versions match the SDK. Check alignment with `npx expo install --check` and `npx expo-doctor`.
+- Add or upgrade Expo-managed packages with `npx expo install <pkg>` so their versions match the SDK. Check alignment with `npx expo install --check` and `npx expo-doctor`.
+
+## Performance setup
+
+| Where | What |
+| --- | --- |
+| `app.json` → `experiments.reactCompiler` | React Compiler memoizes all components automatically. Every component currently compiles without bailouts. |
+| `app.json` → `expo-build-properties` | R8 code minification/optimization (`enableMinifyInReleaseBuilds`), resource shrinking, and an **arm64-v8a-only** build |
+| `app.json` → `expo-font` plugin | Nunito is embedded natively, so nothing is loaded at startup |
+| `metro.config.js` | `inlineRequires: true`, so modules are evaluated lazily on first use |
+| `plugins/withAndroidSystemBars.js` | Light status/navigation bar icons and no nav-bar contrast scrim, set natively with no runtime library |
+| Code | Zustand **selectors** (never `useNotesStore()` without a selector), `memo` on list rows (`Note`, `DayRow`, `ToDoItemRow`), and modals mounted only while open |
+| Device | `pnpm run android:aot` runs `cmd package compile -m speed` for full ahead-of-time compilation. Rerun it after each APK install. |
 
 ## Scripts
 
 | Script | Purpose |
 | --- | --- |
-| `pnpm run compile` | TypeScript check (`tsc --noEmit`). There are some pre-existing errors in unused Ignite leftovers. |
+| `pnpm run compile` | TypeScript check (`tsc --noEmit`). It should report 0 errors. |
 | `pnpm run lint` / `lint:check` | ESLint with Prettier (`printWidth: 100`, no semicolons) |
 | `pnpm test` | Jest (`jest-expo` preset) |
+| `pnpm run check:compiler` | Lists components React Compiler skips; it should say "All components compile." |
 | `pnpm run align-deps` | `npx expo install --fix` |
-| `pnpm run depcruise-run` | Dependency-cruiser rules |
+| `pnpm run adb` | `adb reverse` for Metro (port 8081) |
 
 ## Project layout
 
 ```text
 index.tsx                  # registers the root component
-app.json / app.config.ts   # Expo config (app.config.ts adds expo-audio, expo-sharing, expo-updates plugins)
+app.json                   # Expo config (plugins, build properties, React Compiler)
+plugins/withAndroidSystemBars.js   # local config plugin (Android system bar styling)
+assets/fonts/              # Nunito Regular/Medium/Bold (+ OFL licence), embedded by expo-font
+assets/icons/, assets/images/      # PNG icons; app icon and splash images
 app/
-  app.tsx                  # root: fonts, theme, safe area, keyboard provider, AppNavigator
+  app.tsx                  # root: initDatabase() at load, updates check, providers, AppNavigator
   navigators/
-    AppNavigator.tsx       # stack + bottom tabs, notification tap → Day screen, calls initDatabase()
+    AppNavigator.tsx       # stack + bottom tabs, notification tap → Day screen, ErrorBoundary
     navigationTypes.ts     # AppStackParamList / MainTabParamList (route params live here)
   screens/
     CalendarScreen.tsx     # infinite day list
@@ -92,28 +110,30 @@ app/
     NotesScreen.tsx        # notes overview (2 tabs)
     NoteEditorScreen.tsx   # full-screen note editor
     SettingsScreen.tsx     # reminder sound, backup/restore
-    AddEditItemScreen.tsx  # UNUSED legacy screen (not registered in the navigator)
+    ErrorScreen/           # ErrorBoundary + ErrorDetails
   components/
     Note.tsx               # a day item row: swipe-delete, bell/time picker, "send to date" menu
     AddEditNoteModal.tsx   # centered add/edit dialog for day items
     DayRow.tsx             # a day row in the calendar
-    Screen.tsx, Text.tsx, Icon.tsx, …   # Ignite UI primitives
+    Screen.tsx             # screen container: background, safe area, keyboard avoidance
+    Text.tsx, Icon.tsx     # app font + size/weight presets; PNG icon registry
   stores/notesStore.ts     # zustand store for day items (+ notification scheduling)
+  theme/colors.ts          # color palette (single light theme)
+  theme/typography.ts      # font family names
   utils/
     database.ts            # ALL SQLite schema + queries
     notifications.ts       # schedule/cancel local notifications, Android channels
-    reminderSounds.ts      # bundled sounds + selected sound (MMKV)
+    reminderSounds.ts      # bundled sounds + selected sound
+    storage/index.ts       # loadString/saveString on expo-sqlite kv-store
     backup.ts              # export/import the .db file
     constants.ts           # Turkish month/day names
-  theme/, i18n/, config/   # Ignite theme, translations (mostly unused; UI strings are inline Turkish)
   assets/notifications/    # reminder sound files (also registered in the expo-notifications plugin)
 types/types.ts             # INote, ITabNote, IToDoList, IToDoItem
-components/, app/day.tsx, "app/navigators/AppNavigator.tsx (or similar)"   # stray leftovers, not used
 ```
 
 ## Data model (SQLite: `verticalendar.db`)
 
-The schema is created and migrated in `initDatabase()` (`app/utils/database.ts`), which runs **on every app start**.
+The schema is created and migrated in `initDatabase()` (`app/utils/database.ts`). It runs synchronously **on every app start**, before the first render.
 
 | Table | Columns | Notes |
 | --- | --- | --- |
@@ -128,9 +148,8 @@ Dates are stored as **local** `YYYY-MM-DD` strings. Build them from `getFullYear
 
 ## Backlog / owner notes
 
-- Fix the colors (theme is a mix of Ignite palette and per-screen hard-coded palettes).
+- Fix the colors (per-screen palettes are hard-coded; `theme/colors.ts` is only partly used).
 - When the keyboard opens automatically, empty space remains at the bottom.
 - Cloud backup (in addition to the current file-based backup/restore).
 - "Delete all history" button.
-- `react-native-edge-to-edge` is flagged as unmaintained by `expo-doctor`. It is used by `Screen.tsx` (`SystemBars`); consider replacing it with `expo-status-bar` / `expo-navigation-bar`.
-- Remove Ignite leftovers that cause `tsc` errors (`app/app.tsx` linking config, `AddEditItemScreen.tsx`, root `components/`, `app/day.tsx`).
+- Database calls are synchronous on the JS thread. That's fine at the current data size; move hot paths to the async API if lists grow large.

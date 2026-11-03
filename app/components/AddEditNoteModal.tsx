@@ -1,12 +1,11 @@
 import { FC, useEffect, useRef, useState } from "react"
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
   TextStyle,
   TouchableOpacity,
+  useWindowDimensions,
   View,
   ViewStyle,
 } from "react-native"
@@ -33,6 +32,7 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   const [itemText, setItemText] = useState("")
   const { addNote, updateNote } = useNotesStore()
   const inputRef = useRef<TextInput>(null)
+  const { height: windowHeight } = useWindowDimensions()
   const {
     theme: { colors },
   } = useAppTheme()
@@ -72,74 +72,57 @@ export const AddEditNoteModal: FC<AddEditNoteModalProps> = function AddEditNoteM
   if (!visible) return null
 
   return (
-    <View style={$overlay}>
+    <View style={[$overlay, { paddingBottom: windowHeight * DIALOG_KEYBOARD_RESERVE }]}>
       <Pressable style={StyleSheet.absoluteFill} onPress={handleCancel} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        keyboardVerticalOffset={0}
-      >
-        <View style={$sheet}>
-          <View style={$handleContainer}>
-            <View style={$handle} />
-          </View>
+      <View style={$dialog}>
+        <Text
+          text={`${dayNumber} ${monthName} ${year} ${dayName}`}
+          style={$dateText}
+        />
 
-          <Text
-            text={`${dayNumber} ${monthName} ${year} ${dayName}`}
-            style={$dateText}
-          />
+        <TextInput
+          ref={inputRef}
+          value={itemText}
+          onChangeText={setItemText}
+          placeholder=""
+          placeholderTextColor={colors.textDim}
+          style={[$input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
+          multiline={false}
+          returnKeyType="done"
+          onSubmitEditing={handleSave}
+        />
 
-          <TextInput
-            ref={inputRef}
-            value={itemText}
-            onChangeText={setItemText}
-            placeholder=""
-            placeholderTextColor={colors.textDim}
-            style={[$input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-            multiline={false}
-            returnKeyType="done"
-            onSubmitEditing={handleSave}
-          />
-
-          <View style={$buttonsRow}>
-            <TouchableOpacity style={[$btn, $cancelBtn]} onPress={handleCancel} activeOpacity={0.85}>
-              <Text text="İptal" style={$cancelText} />
-            </TouchableOpacity>
-            <TouchableOpacity style={[$btn, $saveBtn]} onPress={handleSave} activeOpacity={0.85}>
-              <Text text="Kaydet" style={$saveText} />
-            </TouchableOpacity>
-          </View>
+        <View style={$buttonsRow}>
+          <TouchableOpacity style={[$btn, $cancelBtn]} onPress={handleCancel} activeOpacity={0.85}>
+            <Text text="İptal" style={$cancelText} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[$btn, $saveBtn]} onPress={handleSave} activeOpacity={0.85}>
+            <Text text="Kaydet" style={$saveText} />
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </View>
   )
 }
 
+/**
+ * Fraction of the screen height kept free at the bottom so the centered dialog sits above
+ * the keyboard. The dialog never moves when the keyboard opens (no KeyboardAvoidingView).
+ */
+const DIALOG_KEYBOARD_RESERVE = 0.3
+
 const $overlay: ViewStyle = {
   ...StyleSheet.absoluteFill,
   zIndex: 1000,
-  justifyContent: "flex-end",
+  justifyContent: "center",
+  paddingHorizontal: 16,
   backgroundColor: "rgba(0, 0, 0, 0.35)",
 }
 
-const $sheet: ViewStyle = {
+const $dialog: ViewStyle = {
   backgroundColor: "#fff",
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  paddingHorizontal: 16,
-  paddingTop: 16,
-  paddingBottom: 24,
-}
-
-const $handleContainer: ViewStyle = {
-  alignItems: "center",
-  marginBottom: 12,
-}
-
-const $handle: ViewStyle = {
-  width: 40,
-  height: 4,
-  backgroundColor: "#ccc",
-  borderRadius: 2,
+  borderRadius: 16,
+  padding: 16,
 }
 
 const $dateText: TextStyle = {

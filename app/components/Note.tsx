@@ -2,7 +2,7 @@ import { FC, useState } from "react"
 import { View, ViewStyle, TextStyle, TouchableOpacity, Pressable, Modal, Platform } from "react-native"
 import { GestureDetector, Gesture } from "react-native-gesture-handler"
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated"
-import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
+import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from "@react-native-community/datetimepicker"
 
 import { Text } from "@/components/Text"
 import { Icon } from "@/components/Icon"
@@ -71,12 +71,7 @@ export const Note: FC<NoteProps> = function Note({
     onNoteChanged?.()
   }
 
-  const handleOpenDatePicker = () => {
-    setShowSettingsModal(false)
-    setShowDatePickerModal(true)
-  }
-
-  const handleDateChange = (event: any, date?: Date) => {
+  const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
     setShowDatePickerModal(false)
     if (event.type === 'set' && date) {
       // Use local date to avoid timezone issues
@@ -85,54 +80,77 @@ export const Note: FC<NoteProps> = function Note({
       const day = String(date.getDate()).padStart(2, '0')
       const newDate = `${year}-${month}-${day}`
 
-      console.log('newDate: ', newDate)
       moveNoteToDate(note.id, newDate)
       onNoteChanged?.()
     }
   }
 
-  const handleAlarmIconPress = () => {
-    // Reset to default time for new alarm
-    const defaultTime = new Date()
-    defaultTime.setHours(10, 0, 0, 0)
-    setSelectedTime(defaultTime)
-    setShowTimePicker(true)
+  const handleOpenDatePicker = () => {
+    setShowSettingsModal(false)
+    if (Platform.OS === "android") {
+      // Android pickers are native dialogs; open them imperatively instead of mounting a component
+      DateTimePickerAndroid.open({
+        value: new Date(note.note_date + 'T12:00:00'),
+        mode: "date",
+        firstDayOfWeek: 1,
+        onChange: handleDateChange,
+      })
+    } else {
+      setShowDatePickerModal(true)
+    }
   }
 
-  const handleAlarmTimePress = () => {
-    // Pre-select current alarm time
+  const saveTime = (time: Date) => {
+    const hours = time.getHours().toString().padStart(2, '0')
+    const minutes = time.getMinutes().toString().padStart(2, '0')
+    updateNote(note.id, { note_time: `${hours}:${minutes}` })
+  }
+
+  const removeTime = () => {
+    updateNote(note.id, { note_time: null })
+  }
+
+  const openTimePicker = () => {
+    // Pre-select the current alarm time, or 10:00 for a new alarm
+    const initialTime = new Date()
     if (note.note_time) {
       const [hours, minutes] = note.note_time.split(':')
-      const timeDate = new Date()
-      timeDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
-      setSelectedTime(timeDate)
+      initialTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0)
+    } else {
+      initialTime.setHours(10, 0, 0, 0)
     }
-    setShowTimePicker(true)
+
+    if (Platform.OS === "android") {
+      // Opening the native dialog directly (no RN Modal around it) avoids the dialog ending up
+      // behind an empty modal container that blocks all touches.
+      DateTimePickerAndroid.open({
+        value: initialTime,
+        mode: "time",
+        is24Hour: true,
+        ...(note.note_time ? { neutralButton: { label: "Sil" } } : {}),
+        onChange: (event, time) => {
+          if (event.type === 'set' && time) saveTime(time)
+          else if (event.type === 'neutralButtonPressed') removeTime()
+        },
+      })
+    } else {
+      setSelectedTime(initialTime)
+      setShowTimePicker(true)
+    }
   }
 
-  const handleTimeChange = (event: DateTimePickerEvent, time?: Date) => {
-    if (Platform.OS === "android") {
-      setShowTimePicker(false)
-      if (event.type === 'set' && time) {
-        const hours = time.getHours().toString().padStart(2, '0')
-        const minutes = time.getMinutes().toString().padStart(2, '0')
-        updateNote(note.id, { note_time: `${hours}:${minutes}` })
-      }
-    } else {
-      // iOS spinner: just track the selected time, save on modal dismiss
-      if (time) setSelectedTime(time)
-    }
+  const handleIOSTimeChange = (_event: DateTimePickerEvent, time?: Date) => {
+    // iOS spinner: just track the selected time, save on confirm
+    if (time) setSelectedTime(time)
   }
 
   const handleTimeConfirm = () => {
-    const hours = selectedTime.getHours().toString().padStart(2, '0')
-    const minutes = selectedTime.getMinutes().toString().padStart(2, '0')
-    updateNote(note.id, { note_time: `${hours}:${minutes}` })
+    saveTime(selectedTime)
     setShowTimePicker(false)
   }
 
-  const handleTimeCancel = () => {
-    updateNote(note.id, { note_time: null })
+  const handleTimeRemove = () => {
+    removeTime()
     setShowTimePicker(false)
   }
 
@@ -197,7 +215,7 @@ export const Note: FC<NoteProps> = function Note({
           {note.note_time ? (
             <TouchableOpacity
               style={$timeBadge}
-              onPress={handleAlarmTimePress}
+              onPress={openTimePicker}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Text text={note.note_time} style={$timeText} />
@@ -205,7 +223,7 @@ export const Note: FC<NoteProps> = function Note({
           ) : (
             <TouchableOpacity
               style={$alarmOffButton}
-              onPress={handleAlarmIconPress}
+              onPress={openTimePicker}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Icon icon="bell" size={18} color={colors.palette.neutral400} />
@@ -257,7 +275,7 @@ export const Note: FC<NoteProps> = function Note({
         </Pressable>
       </Modal>
 
-      {showDatePickerModal && (
+      {Platform.OS === "ios" && showDatePickerModal && (
         <DateTimePicker
           value={new Date(note.note_date + 'T12:00:00')}
           mode="date"
@@ -267,37 +285,41 @@ export const Note: FC<NoteProps> = function Note({
         />
       )}
 
-      <Modal
-        visible={showTimePicker}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowTimePicker(false)}
-      >
-        <Pressable style={$modalOverlay} onPress={() => setShowTimePicker(false)}>
-          <Pressable style={$timePickerContainer} onPress={() => {}}>
-            <DateTimePicker
-              value={selectedTime}
-              mode="time"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              firstDayOfWeek={1}
-              onChange={handleTimeChange}
-              minuteInterval={5}
-              is24Hour={true}
-              style={{ width: 240 }}
-            />
-            {Platform.OS === "ios" && (
+      {Platform.OS === "ios" && (
+        <Modal
+          visible={showTimePicker}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowTimePicker(false)}
+        >
+          <Pressable style={$modalOverlay} onPress={() => setShowTimePicker(false)}>
+            <Pressable style={$timePickerContainer} onPress={() => {}}>
+              <DateTimePicker
+                value={selectedTime}
+                mode="time"
+                display="spinner"
+                onChange={handleIOSTimeChange}
+                minuteInterval={5}
+                is24Hour={true}
+                style={{ width: 240 }}
+              />
               <View style={$timePickerButtons}>
-                <TouchableOpacity style={[$timePickerBtn, $timePickerCancelBtn]} onPress={handleTimeCancel}>
-                  <Text text="İptal" style={$timePickerCancelText} />
+                {note.note_time && (
+                  <TouchableOpacity style={[$timePickerBtn, $timePickerRemoveBtn]} onPress={handleTimeRemove}>
+                    <Text text="Sil" style={$timePickerOkText} />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={[$timePickerBtn, $timePickerCancelBtn]} onPress={() => setShowTimePicker(false)}>
+                  <Text text="Vazgeç" style={$timePickerCancelText} />
                 </TouchableOpacity>
                 <TouchableOpacity style={[$timePickerBtn, $timePickerOkBtn]} onPress={handleTimeConfirm}>
                   <Text text="Tamam" style={$timePickerOkText} />
                 </TouchableOpacity>
               </View>
-            )}
+            </Pressable>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </Modal>
+      )}
       </Animated.View>
     </GestureDetector>
   )
@@ -415,6 +437,10 @@ const $timePickerBtn: ViewStyle = {
 
 const $timePickerCancelBtn: ViewStyle = {
   backgroundColor: colors.palette.neutral200,
+}
+
+const $timePickerRemoveBtn: ViewStyle = {
+  backgroundColor: "#DC2626",
 }
 
 const $timePickerOkBtn: ViewStyle = {

@@ -61,10 +61,10 @@ export const initDatabase = () => {
     // Column already exists — ignore
   }
 
-  // Backfill order indexes for older rows so drag-drop has stable persisted ordering.
-  db.execSync(`UPDATE tab_notes SET order_index = id WHERE order_index = 0;`)
-  db.execSync(`UPDATE todo_lists SET order_index = id WHERE order_index = 0;`)
-  db.execSync(`UPDATE todo_items SET order_index = id WHERE order_index = 0;`)
+  // NOTE: Do not backfill order_index here (e.g. `SET order_index = id WHERE order_index = 0`).
+  // initDatabase runs on every launch, and reorders legitimately write index 0 for the first row,
+  // so such a backfill would undo the user's drag-drop order on each restart.
+  // Rows with equal order_index fall back to `id ASC` in every query.
 
   try {
     db.execSync(`ALTER TABLE todo_items ADD COLUMN completed INTEGER NOT NULL DEFAULT 0;`)
@@ -195,8 +195,10 @@ export const deleteTabNoteFromDB = (id: number) => {
 }
 
 export const reorderTabNotesInDB = (tabId: number, notes: { id: number }[]) => {
-  notes.forEach((note, index) => {
-    db.runSync("UPDATE tab_notes SET order_index = ? WHERE id = ? AND tab_id = ?", [index, note.id, tabId])
+  db.withTransactionSync(() => {
+    notes.forEach((note, index) => {
+      db.runSync("UPDATE tab_notes SET order_index = ? WHERE id = ? AND tab_id = ?", [index, note.id, tabId])
+    })
   })
 }
 
@@ -276,8 +278,10 @@ export const getToDoListsByTabId = (tabId: number) => {
 }
 
 export const reorderToDoListsInDB = (tabId: number, lists: { id: number }[]) => {
-  lists.forEach((list, index) => {
-    db.runSync("UPDATE todo_lists SET order_index = ? WHERE id = ? AND tab_id = ?", [index, list.id, tabId])
+  db.withTransactionSync(() => {
+    lists.forEach((list, index) => {
+      db.runSync("UPDATE todo_lists SET order_index = ? WHERE id = ? AND tab_id = ?", [index, list.id, tabId])
+    })
   })
 }
 
@@ -366,8 +370,10 @@ export const addToDoItemToDB = (listId: number, content: string, orderIndex?: nu
 }
 
 export const reorderToDoItemsInDB = (listId: number, items: { id: number }[]) => {
-  items.forEach((item, index) => {
-    db.runSync("UPDATE todo_items SET order_index = ? WHERE id = ? AND list_id = ?", [index, item.id, listId])
+  db.withTransactionSync(() => {
+    items.forEach((item, index) => {
+      db.runSync("UPDATE todo_items SET order_index = ? WHERE id = ? AND list_id = ?", [index, item.id, listId])
+    })
   })
 }
 

@@ -1,93 +1,136 @@
-# Welcome to your new ignited app!
+# VertiCalendar
 
-> The latest and greatest boilerplate for Infinite Red opinions
+A personal, offline-first planner app built with **Expo / React Native**. Everything is stored locally in SQLite on the device: there is no backend and no login. The UI language is **Turkish**.
 
-This is the boilerplate that [Infinite Red](https://infinite.red) uses as a way to test bleeding-edge changes to our React Native stack.
+The app has three bottom tabs:
 
-- [Quick start documentation](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/Boilerplate.md)
-- [Full documentation](https://github.com/infinitered/ignite/blob/master/docs/README.md)
+| Tab (route name) | Screen | What it does |
+| --- | --- | --- |
+| **Takvim** (Calendar) | `CalendarScreen` | Infinite vertical list of days (`FlashList`). Tap a day to open `DayScreen`. |
+| **Listeler** (Lists) | `ToDoScreen` | Checklists, split across two tabs ("1" / "2"). Tap a list to open `AddEditToDoListScreen`. |
+| **Notlar** (Notes) | `NotesScreen` | Free-text notes, split across two tabs ("1" / "2"). Tap one to open `NoteEditorScreen`. |
 
-## Getting Started
+Other stack screens: `DayScreen` (the day's items), `AllCalendarItemsScreen` (past and future reminders), `SettingsScreen` (reminder sound, backup and restore).
+
+## Features
+
+- **Day items** (`items` table, `Note` component): add, edit, swipe to delete, drag to reorder. Each item can be sent to today, tomorrow or a chosen date.
+- **Reminders**: tap the bell on an item to set a time. A local notification is scheduled with `expo-notifications`. Tap the time badge again to change or remove it ("Sil"). Tapping a notification opens that day.
+- **Lists**: create lists, add, edit, check, swipe-delete and drag-reorder rows. Lists can be moved to the other tab or copied.
+- **Notes**: plain-text notes. The title is the first line. Notes can be reordered, moved or copied.
+- **Settings**: choose one of 5 bundled reminder sounds. Back up the raw SQLite file through the share sheet or a save-to-device action, and restore it from a `.db` file.
+
+## Tech stack
+
+| Concern | Library |
+| --- | --- |
+| Framework | Expo SDK **57** (`expo@~57.0.31`), React Native **0.86**, React 19.2, New Architecture, Hermes V1 |
+| Navigation | `@react-navigation/native-stack` + `@react-navigation/bottom-tabs` (v7). **Not** Expo Router. |
+| Storage | `expo-sqlite` (sync API) for all user data; `react-native-mmkv` for small preferences |
+| State | `zustand` (`app/stores/notesStore.ts`) for day items only; the other screens read SQLite directly into local state |
+| Lists and gestures | `react-native-draggable-flatlist`, `react-native-gesture-handler`, `react-native-reanimated` 4 + `react-native-worklets` |
+| Date and time pickers | `@react-native-community/datetimepicker` |
+| Notifications and sounds | `expo-notifications`, `expo-audio` |
+| Backup | `expo-file-system/legacy`, `expo-sharing`, `expo-document-picker` |
+| OTA updates | `expo-updates` (EAS Update) |
+| Boilerplate | [Ignite](https://github.com/infinitered/ignite) v11. Leftover boilerplate (themes, i18n, `Screen`, `Text`, …) is still present. |
+
+## Getting started
+
+Requirements: Node ≥ 20 and **pnpm 11** (the lockfile is pnpm). Use a **development build**, not Expo Go, because the app uses native modules such as MMKV and SQLite.
 
 ```bash
 pnpm install
-pnpm run start
+pnpm run start            # Metro for the dev client
+
+# Build and run natively (regenerates ios/ and android/ when missing)
+pnpm run android
+pnpm run ios
+
+# EAS local builds
+pnpm run build:android:device
+pnpm run build:ios:sim
 ```
 
-To make things work on your local simulator, or on your phone, you need first to [run `eas build`](https://github.com/infinitered/ignite/blob/master/docs/expo/EAS.md). We have many shortcuts on `package.json` to make it easier:
+`ios/` and `android/` are **gitignored and generated** (Continuous Native Generation). After any change to native dependencies or `app.json` plugins, regenerate them:
 
 ```bash
-pnpm run build:ios:sim # build for ios simulator
-pnpm run build:ios:device # build for ios device
-pnpm run build:ios:prod # build for ios device
+pnpm run prebuild:clean   # npx expo prebuild --clean
 ```
 
-### `./assets`
+### pnpm notes
 
-This directory is designed to organize and store various assets, making it easy for you to manage and use them in your application. The assets are further categorized into subdirectories, including `icons` and `images`:
+- Project-level pnpm settings live in **`pnpm-workspace.yaml`** (`nodeLinker: hoisted`, `allowBuilds`). pnpm 11 ignores pnpm settings in `.npmrc`.
+- To add or upgrade Expo-managed packages, use `npx expo install <pkg>` so versions match the SDK. Check alignment with `npx expo install --check` and `npx expo-doctor`.
 
-```tree
-assets
-├── icons
-└── images
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `pnpm run compile` | TypeScript check (`tsc --noEmit`). There are some pre-existing errors in unused Ignite leftovers. |
+| `pnpm run lint` / `lint:check` | ESLint with Prettier (`printWidth: 100`, no semicolons) |
+| `pnpm test` | Jest (`jest-expo` preset) |
+| `pnpm run align-deps` | `npx expo install --fix` |
+| `pnpm run depcruise-run` | Dependency-cruiser rules |
+
+## Project layout
+
+```text
+index.tsx                  # registers the root component
+app.json / app.config.ts   # Expo config (app.config.ts adds expo-audio, expo-sharing, expo-updates plugins)
+app/
+  app.tsx                  # root: fonts, theme, safe area, keyboard provider, AppNavigator
+  navigators/
+    AppNavigator.tsx       # stack + bottom tabs, notification tap → Day screen, calls initDatabase()
+    navigationTypes.ts     # AppStackParamList / MainTabParamList (route params live here)
+  screens/
+    CalendarScreen.tsx     # infinite day list
+    DayScreen.tsx          # items of one day (DraggableFlatList of <Note>)
+    AllCalendarItemsScreen.tsx
+    ToDoScreen.tsx         # lists overview (2 tabs)
+    AddEditToDoListScreen.tsx  # one list: title + rows, centered input dialogs
+    NotesScreen.tsx        # notes overview (2 tabs)
+    NoteEditorScreen.tsx   # full-screen note editor
+    SettingsScreen.tsx     # reminder sound, backup/restore
+    AddEditItemScreen.tsx  # UNUSED legacy screen (not registered in the navigator)
+  components/
+    Note.tsx               # a day item row: swipe-delete, bell/time picker, "send to date" menu
+    AddEditNoteModal.tsx   # centered add/edit dialog for day items
+    DayRow.tsx             # a day row in the calendar
+    Screen.tsx, Text.tsx, Icon.tsx, …   # Ignite UI primitives
+  stores/notesStore.ts     # zustand store for day items (+ notification scheduling)
+  utils/
+    database.ts            # ALL SQLite schema + queries
+    notifications.ts       # schedule/cancel local notifications, Android channels
+    reminderSounds.ts      # bundled sounds + selected sound (MMKV)
+    backup.ts              # export/import the .db file
+    constants.ts           # Turkish month/day names
+  theme/, i18n/, config/   # Ignite theme, translations (mostly unused; UI strings are inline Turkish)
+  assets/notifications/    # reminder sound files (also registered in the expo-notifications plugin)
+types/types.ts             # INote, ITabNote, IToDoList, IToDoItem
+components/, app/day.tsx, "app/navigators/AppNavigator.tsx (or similar)"   # stray leftovers, not used
 ```
 
-**icons**
-This is where your icon assets will live. These icons can be used for buttons, navigation elements, or any other UI components. The recommended format for icons is PNG, but other formats can be used as well.
+## Data model (SQLite: `verticalendar.db`)
 
-Ignite comes with a built-in `Icon` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/boilerplate/app/components/Icon.md).
+The schema is created and migrated in `initDatabase()` (`app/utils/database.ts`), which runs **on every app start**.
 
-**images**
-This is where your images will live, such as background images, logos, or any other graphics. You can use various formats such as PNG, JPEG, or GIF for your images.
+| Table | Columns | Notes |
+| --- | --- | --- |
+| `items` | `id, note_date (YYYY-MM-DD), note_time (HH:MM \| null), description, order_index, notification_id` | Day items and reminders |
+| `tab_notes` | `id, tab_id (1\|2), content, order_index, created_at, updated_at` | Notes tab |
+| `todo_lists` | `id, tab_id (1\|2), title, order_index, created_at, updated_at` | Lists tab |
+| `todo_items` | `id, list_id, content, completed (0\|1), order_index, created_at, updated_at` | Rows of a list |
 
-Another valuable built-in component within Ignite is the `AutoImage` component. You can find detailed usage instructions in the [docs](https://github.com/infinitered/ignite/blob/master/docs/Components-AutoImage.md).
+Ordering is always `ORDER BY order_index ASC, id ASC`. Drag-and-drop rewrites `order_index` as `0..n-1` for the whole list, inside a transaction.
 
-How to use your `icon` or `image` assets:
+Dates are stored as **local** `YYYY-MM-DD` strings. Build them from `getFullYear()` / `getMonth()` / `getDate()` and never from `toISOString()`, which converts to UTC and can shift the day.
 
-```typescript
-import { Image } from 'react-native';
+## Backlog / owner notes
 
-const MyComponent = () => {
-  return (
-    <Image source={require('assets/images/my_image.png')} />
-  );
-};
-```
-
-## Running Maestro end-to-end tests
-
-Follow our [Maestro Setup](https://ignitecookbook.com/docs/recipes/MaestroSetup) recipe.
-
-## Next Steps
-
-### Ignite Cookbook
-
-[Ignite Cookbook](https://ignitecookbook.com/) is an easy way for developers to browse and share code snippets (or “recipes”) that actually work.
-
-### Upgrade Ignite boilerplate
-
-Read our [Upgrade Guide](https://ignitecookbook.com/docs/recipes/UpdatingIgnite) to learn how to upgrade your Ignite project.
-
-## Community
-
-⭐️ Help us out by [starring on GitHub](https://github.com/infinitered/ignite), filing bug reports in [issues](https://github.com/infinitered/ignite/issues) or [ask questions](https://github.com/infinitered/ignite/discussions).
-
-💬 Join us on [Slack](https://join.slack.com/t/infiniteredcommunity/shared_invite/zt-1f137np4h-zPTq_CbaRFUOR_glUFs2UA) to discuss.
-
-📰 Make our Editor-in-chief happy by [reading the React Native Newsletter](https://reactnativenewsletter.com/).
-
---- LISTS SCREEN ---
-- This screen should have 2 tabs too. Add a tab selector. Tab titles should be just "1" and "2" and each should take %50 width of the covering wrapper.
-- Show a floating action button : "+" at the bottom right (It should be visible from each tab.)
-- When pressed show a full screen list editor. show cancel and save buttons at  the top. when user press save, save the list to database (Also save the tab id so that we can fetch tab lists from that id)
-- Lists must have a title and list items. 
-- When a list is saved close the list editing screen
-- User can add list items, delete list items with slide similar to DayScreen
-
-
-
----- DİĞER YAPILACAKLAR ---
-- Renkleri düzelt
-- keyboard otomatik açıldığında altta boşluk kalıyor.
-- Database yedeği alma. Backup/restore olmalı. (Bunu buluta da gönderebilir. beli bir formatta olur, onu yükler geri.) Bunu için settings screen olacak.
-- Tüm geçmişi sil butonu
+- Fix the colors (theme is a mix of Ignite palette and per-screen hard-coded palettes).
+- When the keyboard opens automatically, empty space remains at the bottom.
+- Cloud backup (in addition to the current file-based backup/restore).
+- "Delete all history" button.
+- `react-native-edge-to-edge` is flagged as unmaintained by `expo-doctor`. It is used by `Screen.tsx` (`SystemBars`); consider replacing it with `expo-status-bar` / `expo-navigation-bar`.
+- Remove Ignite leftovers that cause `tsc` errors (`app/app.tsx` linking config, `AddEditItemScreen.tsx`, root `components/`, `app/day.tsx`).

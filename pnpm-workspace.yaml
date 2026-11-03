@@ -1,0 +1,6 @@
+# pnpm 11+ reads project settings from here (not from .npmrc).
+nodeLinker: hoisted
+
+allowBuilds:
+  esbuild: true
+  unrs-resolver: true

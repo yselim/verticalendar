@@ -1,14 +1,13 @@
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Alert,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   TextInput,
   TextStyle,
   TouchableOpacity,
+  useWindowDimensions,
   View,
   ViewStyle,
 } from "react-native"
@@ -183,6 +182,8 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
   const createListInputRef = useRef<TextInput>(null)
   const addItemInputRef = useRef<TextInput>(null)
   const editTitleInputRef = useRef<TextInput>(null)
+  const { height: windowHeight } = useWindowDimensions()
+  const $modalOverlayStyle = [$modalOverlay, { paddingBottom: windowHeight * DIALOG_KEYBOARD_RESERVE }]
 
   const {
     theme: { colors },
@@ -383,15 +384,12 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
       <Modal
         visible={showCreateListModal}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => navigation.goBack()}
       >
-        <KeyboardAvoidingView
-          style={$modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        >
+        <View style={$modalOverlayStyle}>
           <Pressable style={StyleSheet.absoluteFill} onPress={() => navigation.goBack()} />
-          <Pressable style={$modalSheet} onPress={() => {}}>
+          <Pressable style={$modalDialog} onPress={() => {}}>
             <Text text="Liste Başlığı" weight="medium" style={$modalTitle} />
             <TextInput
               ref={createListInputRef}
@@ -425,23 +423,20 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
               </TouchableOpacity>
             </View>
           </Pressable>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       <Modal
         visible={showAddItemModal}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => {
           setShowAddItemModal(false)
           setEditingItem(null)
           setNewItemText("")
         }}
       >
-        <KeyboardAvoidingView
-          style={$modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : "padding"}
-        >
+        <View style={$modalOverlayStyle}>
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={() => {
@@ -450,7 +445,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
               setNewItemText("")
             }}
           />
-          <Pressable style={$modalSheet} onPress={() => {}}>
+          <Pressable style={$modalDialog} onPress={() => {}}>
             <Text
               text={editingItem ? "Satırı Düzenle" : "Yeni Satır"}
               weight="medium"
@@ -496,7 +491,7 @@ export const AddEditToDoListScreen: FC<AddEditToDoListScreenProps> = function Ad
               </TouchableOpacity>
             </View>
           </Pressable>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </Screen>
   )
@@ -590,19 +585,23 @@ const $fabText: TextStyle = {
   fontWeight: "700",
 }
 
+/**
+ * Fraction of the screen height kept free at the bottom so centered input dialogs sit above
+ * the keyboard. The dialogs never move when the keyboard opens (no KeyboardAvoidingView).
+ */
+const DIALOG_KEYBOARD_RESERVE = 0.3
+
 const $modalOverlay: ViewStyle = {
   flex: 1,
   backgroundColor: "rgba(0, 0, 0, 0.35)",
-  justifyContent: "flex-end",
+  justifyContent: "center",
+  paddingHorizontal: 16,
 }
 
-const $modalSheet: ViewStyle = {
+const $modalDialog: ViewStyle = {
   backgroundColor: "#fff",
-  borderTopLeftRadius: 16,
-  borderTopRightRadius: 16,
-  paddingHorizontal: 16,
-  paddingTop: 16,
-  paddingBottom: 24,
+  borderRadius: 16,
+  padding: 16,
 }
 
 const $modalTitle: TextStyle = {
